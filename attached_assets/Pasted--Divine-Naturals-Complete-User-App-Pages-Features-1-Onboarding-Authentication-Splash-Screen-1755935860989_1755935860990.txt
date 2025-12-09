@@ -1,0 +1,98 @@
+🌿 Divine Naturals — Complete User App Pages & Features
+1. Onboarding & Authentication
+Splash Screen (Divine Naturals Logo + Tagline)
+Login / Sign Up
+OTP-based mobile login
+Google / Apple login
+Profile Setup (Name, Email, Location, Preferences)
+Language Selection (English, Hindi, Marathi, etc.)
+2. Home Dashboard
+Greeting (“Good Morning, [Name] 🌞”)
+Quick Actions → Order Milk, Manage Subscription, Offers
+Live Order Status (Today’s milk delivery status)
+Featured Products & Banners
+Recent Orders
+Daily Tip / Divine Naturals Quote
+3. Shop (E-commerce Store)
+Categories → Milk, Ghee, Paneer, Butter, Sweets, Beverages, Organic Products
+Product Listing (with images, price, add-to-cart, wishlist ❤️)
+Filters → Price, Freshness, Organic, Popularity
+Product Details Page → Description, Nutritional Info, Reviews, “Add to Subscription” button
+Related Products / Frequently Bought Together
+4. Subscription Management
+Create New Subscription → Milk / Curds / Ghee packs
+Daily / Weekly / Monthly scheduling
+Pause / Resume subscription
+Change quantity anytime
+Calendar view of deliveries
+Auto-payment setup
+5. Cart & Checkout
+Cart Page → Products list + quantity update
+Apply Coupon Codes
+Delivery Slot selection (Morning/Evening)
+Payment Options → UPI, Wallet, Card, COD
+Order Summary & Confirmation
+6. Order Management
+Active Orders
+Real-time tracking → Map view of delivery boy 🚚
+ETA & delivery updates (push notifications)
+Past Orders
+Reorder button
+Invoice download (PDF)
+Feedback option (star rating + comments)
+7. Wallet & Payments
+Divine Naturals Wallet balance
+Add Money (UPI / Card / Netbanking)
+Cashback & Rewards system
+Transaction History
+Auto-deduct for subscriptions
+8. Profile & Settings
+Personal Info (Name, Mobile, Email)
+Family Profiles (multiple accounts under same login)
+Profile Picture
+Biometric Login (Fingerprint / Face ID)
+Notification Preferences (App, SMS, WhatsApp)
+Change Password / Logout
+9. Address Management
+Add New Address (Home, Work, Other)
+Google Maps pin-drop
+Delivery Instructions (Leave at gate, hand to guard, etc.)
+Default Address setting
+10. Offers & Loyalty
+Coupon Codes
+Festival Offers (Diwali / Janmashtami packs)
+Referral Program → Invite & Earn cashback
+Rewards Points system (earn points on every order, redeem later)
+Scratch Cards / Gamified Rewards
+11. Customer Support
+Live Chat Support
+FAQs (Milk, Orders, Delivery, Payments)
+Raise Ticket (Delivery issue, refund, damaged product)
+Direct Call / WhatsApp option
+Track complaint status
+12. Wellness & Community
+Blog Section (Benefits of A2 Milk, Healthy recipes, Farm-to-home journey)
+Daily Health Tips & Notifications
+Seva Stories (CSR / Eco initiatives by Divine Naturals)
+Educational Videos (How our milk is processed, benefits of natural ghee)
+13. Notifications Center
+Delivery updates
+Subscription reminders
+New product launches
+Offers / Discounts
+Community announcements
+14. Festival / Seasonal Specials
+Pre-bundled packs (Janmashtami Sweets, Diwali Hampers, Winter Immunity Packs)
+Limited-time subscription offers
+Gifting section (Send Divine Naturals products as gifts 🎁)
+15. Wellness Tracker (Add-on)
+(optional, but premium touch)
+Track daily milk consumption
+Nutritional stats
+Family consumption dashboard
+Eco impact → “You saved 25 plastic bags this month 🌍”
+16. Settings & Security
+Manage Devices (Logout from other devices)
+Delete Account (GDPR compliance)
+Privacy & Terms of Service page
+App Theme (Light / Dark mode 🌙)

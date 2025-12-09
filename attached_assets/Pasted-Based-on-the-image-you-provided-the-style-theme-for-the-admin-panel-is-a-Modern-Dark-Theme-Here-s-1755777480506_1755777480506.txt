@@ -1,0 +1,25 @@
+Based on the image you provided, the style theme for the admin panel is a Modern Dark Theme.
+
+Here's a detailed description of the style:
+
+Color Palette
+The theme uses a minimalist, high-contrast dark palette to create a sleek and professional look.
+
+Primary Background: A very dark gray or off-black. This isn't true black (#000000), but a deep charcoal that allows for subtle visual depth and shadows.
+
+Card/Module Background: A slightly lighter shade of dark gray than the background. This creates a clear separation and a sense of layered elevation for the content blocks.
+
+Accent Colors: A limited set of bright, semi-saturated colors are used sparingly to highlight key information. The primary accents are a vibrant sky blue, a sharp neon green, and a warm orange/gold. These colors are crucial for drawing the eye to important data, metrics, and active navigation items.
+
+Text and Iconography: Primarily white and light gray. White is used for high-emphasis text, like titles and key numbers, while a slightly less bright light gray is used for labels and secondary information to maintain visual balance and prevent eye strain.
+
+Design Principles
+The design adheres to several key principles that give it its distinct feel:
+
+Flat & Clean Design: There are no heavy gradients, drop shadows, or overly complex textures. The design is two-dimensional and minimalist, making it feel lightweight and fast.
+
+High Contrast: The use of light text and vibrant accents on a dark background ensures that all information is highly readable and easy to scan, even in low-light environments.
+
+Visual Hierarchy: The use of different font sizes, weights, and accent colors clearly organizes the information. The most important numbers and titles are bold and prominent, while supporting details are smaller and in a muted color.
+
+Consistency: The style is applied consistently across all elements, from the navigation icons to the data visualizations within the cards. The icons are all line-based and the charts use the same accent colors, creating a cohesive and polished look.

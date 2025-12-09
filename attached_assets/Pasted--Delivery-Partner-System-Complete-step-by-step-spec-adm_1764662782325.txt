@@ -1,0 +1,500 @@
+✅ Delivery Partner System — Complete, step-by-step spec (admin + driver app + backend)
+
+Below is a full, production-ready plan (frontend + backend + DB + APIs + workflows + UI/UX + security + edge cases + tests + deployment notes) so you — or a dev on your team — can implement Delivery Partner Management exactly as you described. It includes how admin creates/verifies drivers (Aadhaar/PAN/mobile/address proof), issues username/password, assigns zones (Bandra, Santacruz, Andheri etc.), assigns orders, blocks/unblocks drivers, and a matching Delivery Partner mobile app flow. I’ll give routes, DB schemas, sample API signatures, UI pages, background jobs, validation, examples and recommended policies.
+
+1 — High level goals & user stories
+
+Admin (web)
+
+Create delivery partner account (capture full name, DOB, phone, email, Aadhaar number, PAN number, address proof image, profile image, vehicle type, licence).
+
+Upload / scan ID docs (Aadhaar, PAN, address proof).
+
+Admin verifies documents, sets verified = true/false.
+
+Admin can generate username & password OR driver can receive one-time link to set password.
+
+Admin assigns drivers to zones/areas (Bandra, Santacruz, Andheri) and to routes/orders.
+
+Admin can block/unblock driver accounts.
+
+Admin can view driver activity, completed deliveries, earnings, assigned orders.
+
+Admin can reassign/transfer orders.
+
+Delivery Partner (mobile/web app)
+
+Signup only if admin-created (or request account flow — optional).
+
+Login with username/password (or OTP).
+
+View assigned orders for the day, accept/decline assignment (admin can force-assign).
+
+Mark stages: Accepted -> Picked Up -> Out for Delivery -> Delivered + capture signature/photo/POD.
+
+See earnings, shift history, and profile + uploaded docs.
+
+If blocked, show restricted message and no access.
+
+System
+
+Role-based access control, audit logs for admin driver-creation/verification/blocks.
+
+Notifications: SMS/WhatsApp or in-app push when driver assigned, blocked, or admin changes credentials.
+
+Secure storage of sensitive documents; access control & encryption at rest.
+
+Admin-level page to bulk-create/import drivers (CSV) and bulk-assign zones.
+
+2 — Database schema (Postgres + Drizzle-like pseudocode)
+-- delivery_partners table
+CREATE TABLE delivery_partners (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name text NOT NULL,
+  email text,
+  phone varchar(15) NOT NULL UNIQUE,
+  username text UNIQUE, -- admin assigned username
+  password_hash text,   -- bcrypt hash (nullable if using OTP reset)
+  aadhaar_number varchar(20),
+  pan_number varchar(20),
+  dob date,
+  vehicle_type varchar(50), -- "bike", "car", "van"
+  license_number varchar(50),
+  address text,
+  zone text, -- e.g., 'Bandra', 'Santacruz', 'Andheri' (consider relationship to zones table)
+  status text DEFAULT 'active', -- active | blocked | suspended | pending_verification
+  verified boolean DEFAULT FALSE, -- documents verified by admin
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- driver_documents
+CREATE TABLE driver_documents (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  delivery_partner_id uuid REFERENCES delivery_partners(id) ON DELETE CASCADE,
+  doc_type text NOT NULL, -- "aadhaar_front", "aadhaar_back", "pan", "address_proof", "profile"
+  storage_path text NOT NULL, -- S3 key or internal path
+  uploaded_at timestamptz DEFAULT now(),
+  verified boolean DEFAULT FALSE,
+  verifier_id uuid, -- admin who verified
+  verified_at timestamptz
+);
+
+-- driver_assignments (which driver is assigned to which order)
+CREATE TABLE driver_assignments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid REFERENCES orders(id),
+  delivery_partner_id uuid REFERENCES delivery_partners(id),
+  assigned_by uuid, -- admin user id
+  assigned_at timestamptz DEFAULT now(),
+  status text DEFAULT 'assigned', -- assigned | accepted | declined | in_progress | completed | cancelled
+  status_history jsonb DEFAULT '[]' -- list of {status, ts, actor}
+);
+
+-- zones table (optional)
+CREATE TABLE zones (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text UNIQUE,
+  city text,
+  area_geo jsonb, -- polygon for geo
+  created_at timestamptz DEFAULT now()
+);
+
+-- audit logs (who did what)
+CREATE TABLE audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  actor_id uuid, -- admin or system
+  actor_type text, -- "admin","system"
+  action text,
+  meta jsonb,
+  created_at timestamptz DEFAULT now()
+);
+
+
+Notes:
+
+Store documents in S3 (or Replit storage) and store references in driver_documents.storage_path. Keep docs private.
+
+Use separate zones table if you need geo routing/filters.
+
+3 — Backend API endpoints (Express + TypeScript signatures)
+
+All admin endpoints require admin auth middleware. Delivery endpoints require driver auth.
+
+Admin (protected)
+POST   /api/admin/delivery-partners              -> create driver (accepts form-data for docs)
+GET    /api/admin/delivery-partners              -> list drivers (filters: zone, status, verified)
+GET    /api/admin/delivery-partners/:id          -> driver detail + docs
+PUT    /api/admin/delivery-partners/:id          -> update driver details (zone, vehicle, phone, etc.)
+PATCH  /api/admin/delivery-partners/:id/verify   -> mark driver or docs verified {verified: true, verifierId}
+PATCH  /api/admin/delivery-partners/:id/block    -> block/unblock driver {action: 'block'|'unblock', reason}
+POST   /api/admin/delivery-partners/bulk-upload  -> CSV import
+POST   /api/admin/delivery-partners/:id/reset-password -> admin-set password
+POST   /api/admin/delivery-partners/:id/assign   -> assign order(s) to driver {orderIds: []}
+GET    /api/admin/zones                          -> list zones (create if needed)
+POST   /api/admin/zones                          -> create zone
+
+Driver (delivery partner) (protected)
+POST   /api/driver/login                         -> { username, password } => JWT/session
+POST   /api/driver/otp-login                     -> {phone, otp} (if using OTP)
+GET    /api/driver/me                            -> profile + docs + assigned orders
+PATCH  /api/driver/me                            -> update profile (address, vehicle)
+GET    /api/driver/assignments                   -> todays/pending assignments
+POST   /api/driver/assignments/:id/accept        -> accept assignment
+POST   /api/driver/assignments/:id/decline       -> decline assignment {reason}
+PATCH  /api/driver/assignments/:id/status        -> update status e.g., picked_up, out_for_delivery, delivered {status, proofImage, signature}
+POST   /api/driver/pod/:assignmentId             -> upload proof of delivery (photo, signature)
+GET    /api/driver/earnings                      -> earnings summary
+
+Public / misc
+POST /api/verify/phone/send-otp   -> send OTP (for driver if you allow them)
+POST /api/verify/phone/confirm   -> confirm OTP
+
+
+Security: Use HTTPS, rate limit login, lock account after repeated failures.
+
+4 — Admin UI pages & components (detailed)
+
+Design to match your admin style (colors etc.). Components to implement:
+
+Admin → Delivery Partners (list)
+
+Header: "Delivery Partners" + search + filter dropdowns (zone, status, verified).
+
+Table columns: Avatar, Name, Phone, Zone, Vehicle, Verified (✅), Status (Active/Blocked), Assigned Orders Count, Actions (View / Edit / Verify / Block / Reset Password / Assign).
+
+Bulk actions: Import CSV, Export CSV, Bulk assign zone.
+
+Admin → Create Delivery Partner (form modal / page)
+
+Fields: Full name, email, phone, DOB, Aadhaar number, PAN number, address textarea, zone select, vehicle type, license number.
+
+Upload components: Aadhaar front/back, PAN, address proof, profile image — drag & drop with preview.
+
+Buttons: Save & Create Credentials OR Create & Send OTP to driver.
+
+On success: show auto-generated username (eg: driver_1234) and initial password (display once) OR send SMS with credentials.
+
+Admin → Driver Details page
+
+Top bar with driver status, verified badge, block/unblock toggle, "Reset password" button.
+
+Documents gallery with verified toggle on each doc and an overall verified button.
+
+Assign orders widget: list of unassigned orders, checkbox select → Assign.
+
+Activity log: show recent assignments, deliveries, audits (from audit_logs).
+
+Earnings summary: total deliveries, total earnings, last payment date.
+
+Action buttons: Block/Unblock, Mark Verified, Reset Password, Export docs (admin only).
+
+Admin → Assign Orders modal
+
+Select driver(s) or zone → show candidate orders grouped by area/time.
+
+Drag & drop orders onto driver card (nice UX) or bulk assign via checkboxes.
+
+Admin → Zones page
+
+Create/Edit zones (name, city, polygon geo).
+
+See driver counts per zone, pending orders per zone.
+
+Notifications & Credentials
+
+When admin creates driver, provide options:
+
+Auto-generate username & password and display once with a "Copy credentials" button.
+
+Send SMS/email with credentials (recommended).
+
+Create driver in pending_verification until admin verifies documents.
+
+UX notes:
+
+Show status chips: Pending Verification, Verified, Blocked.
+
+Confirmation dialogs for block/unblock and reset password.
+
+Keep audit trail visible (who verified, when, reason).
+
+5 — Driver app (essential screens & interactions)
+
+The driver app can be a mobile-responsive web UI or a lightweight React Native app. Key screens:
+
+Login / OTP screen
+
+Login with username/password or OTP by phone.
+
+Home / Assignments list
+
+Show today's assigned deliveries (sorted by time/zone).
+
+Each assignment card: Order ID, customer name, address, time slot, contact number, items count, distance (if map).
+
+Assignment detail
+
+Show pickup location (if pickup needed), delivery address, items with quantities.
+
+Buttons: Start → Picked Up → Out for Delivery → Delivered.
+
+On Delivered: required fields: delivery photo upload OR customer signature (draw/sign), optional notes.
+
+Contact customer button (call/WhatsApp).
+
+Map / Route View (optional)
+
+Show route optimization / route to next delivery (external maps link).
+
+Earnings & History
+
+Show today's and monthly earnings, number of completed deliveries, incentives.
+
+Profile & Documents
+
+View uploaded docs and verification status. Request account support.
+
+Blocked message
+
+If admin has blocked the account, a clear message with reason and support contact.
+
+Important: show a single-state UI for slow networks and offline support for proof upload (cache then upload).
+
+6 — Workflows & edge cases
+Create driver (admin flow)
+
+Admin fills form + uploads docs.
+
+Backend creates delivery_partners record with status = pending_verification.
+
+Docs saved to private storage; driver_documents entries created.
+
+Admin reviews docs, clicks Verify -> set verified = true + status = active.
+
+Admin creates username & password (server generates: driver_{random}$salt) -> hashed with bcrypt and saved. Optionally push SMS/email to driver with credentials and a forced password reset on first login.
+
+Driver accepts/declines assignment
+
+Driver receives assignment push/in-app. They can accept within N minutes.
+
+If declined, admin receives notification and can reassign.
+
+Block driver
+
+Admin PATCH /admin/delivery-partners/:id/block with reason. Server sets status = blocked and invalidates any active sessions (delete JWT / session row). Audit log created.
+
+Order reassignment
+
+Admin can reassign orders; previous assignment status set to cancelled, new driver_assignments created and assigned.
+
+Sensitive data / compliance
+
+Aadhaar & PAN are sensitive: store only if legally allowed. Consider hashing/storing masked numbers (last 4 digits visible) and keep images encrypted. Limit access to admin roles only.
+
+7 — Notifications & communications
+
+SMS/WhatsApp when admin creates driver/assigns credentials/blocks: use Twilio / MSG91 / local SMS gateway.
+
+Email with verification docs status & assignment details.
+
+In-app push (web push or mobile push) for assignments, cancellations.
+
+Call link: tel: to customer phone from driver app.
+
+Example texts:
+
+"Hello Rohit — your delivery account at Divine Naturals is created. Username: driver_bandra_42. Please login and reset password: [login link]."
+
+"You have 6 new deliveries for today (Bandra). Please check the app."
+
+8 — Security & permissions
+
+Admin routes: admin role only; use middleware isAdmin.
+
+Driver routes: driver role only; session or JWT with short expiry. Invalidate on block.
+
+File uploads: S3 private bucket + signed URLs for downloads. Serve documents only from admin UI.
+
+Passwords: bcryptjs with salt; require minimum length; optional forced password reset on first login.
+
+Rate-limiting & account lockout on repeated failed logins.
+
+Audit logs for create/verify/block/assign events.
+
+9 — Example Express/TypeScript snippets
+
+Create driver (file + form-data)
+
+// admin/delivery.controller.ts (simplified)
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import { uploadToS3 } from '../lib/storage';
+
+export const createDriver = async (req: Request, res: Response) => {
+  const { full_name, phone, email, vehicle_type, zone } = req.body;
+  // server-side validation...
+  const username = `driver_${zone.toLowerCase()}_${Math.floor(Math.random()*9000+1000)}`;
+  const password = Math.random().toString(36).slice(-8);
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const driver = await db.delivery_partners.insert({
+    full_name, phone, email, vehicle_type, zone, username, password_hash: passwordHash, status: 'pending_verification'
+  });
+
+  // handle uploaded files (req.files)
+  for (const file of req.files as Express.Multer.File[]) {
+    const key = await uploadToS3(file);
+    await db.driver_documents.insert({
+      delivery_partner_id: driver.id,
+      doc_type: file.fieldname,
+      storage_path: key
+    });
+  }
+
+  // create audit log
+  await db.audit_logs.insert({actor_id: req.user.id, actor_type: 'admin', action: 'create_driver', meta: { driverId: driver.id }});
+
+  // return credentials (display once)
+  return res.json({ driverId: driver.id, username, password });
+};
+
+
+Assign order to driver
+
+POST /api/admin/delivery-partners/:id/assign
+body: { orderIds: ["...","..."] }
+
+controller:
+for each orderId:
+  create driver_assignments record
+  update order.status = 'assigned_to_delivery'
+  send notification to driver (push + sms)
+
+
+Driver updates status
+
+PATCH /api/driver/assignments/:id/status
+body: { status: 'picked_up'|'out_for_delivery'|'delivered', proofImage: file, signature?: image }
+
+controller:
+  validate assignment belongs to driver
+  update driver_assignments.status and push to status_history
+  if status == delivered:
+    update order.status = 'DELIVERED'
+    attach POD (photo/signature)
+    update earnings (if admin-managed)
+    send notification to customer
+
+10 — Testing & QA checklist
+
+✅ Create driver with docs (upload) → doc records and S3 objects exist.
+
+✅ Admin verify doc → verified=true.
+
+✅ Admin generate credentials -> driver can login.
+
+✅ Block driver -> driver's token invalidated; cannot access driver routes.
+
+✅ Assign order -> driver receives assignment; can accept → status flows; POD stored.
+
+✅ Reassign order -> old assignment cancelled, new created.
+
+✅ CSV bulk import with error report.
+
+✅ Permissions: admin-only admin routes; driver-only driver routes.
+
+✅ UI: forms show validation errors, images preview, confirmation modals.
+
+✅ Edge: driver offline uploads POD later — system accepts when reconnected.
+
+11 — Deployment & operational notes
+
+Use S3 (or Replit storage) for docs, ensure private ACLs & signed URLs.
+
+Use Redis for sessions and push notification queue. Use worker for sending SMS/email.
+
+Secure DB, backups, and rotate API keys.
+
+Logging & monitoring for suspicious actions (multiple failed logins, blocked driver attempts).
+
+If you plan to store Aadhaar/PAN upload — ensure compliance with local laws & data retention policies.
+
+12 — Roadmap (implementation phases with priorities)
+
+Phase A (MVP — 3–5 days)
+
+DB: delivery_partners, driver_documents, driver_assignments, audit_logs.
+
+Admin pages: list, create (single), view & verify documents, block/unblock, reset password.
+
+Driver routes: login, me, assignments list, accept/decline, update status.
+
+Notifications basic: in-app + admin email.
+
+Phase B (2–4 days)
+
+Assign orders UI (drag & drop).
+
+POD upload & signature capture.
+
+Session invalidation on block.
+
+CSV import/export.
+
+Phase C (optional, 3–7 days)
+
+Route optimization + map integration.
+
+Driver earnings & payout system.
+
+Driver mobile app enhancements (offline mode, maps).
+
+SMS/WhatsApp integration for credential delivery.
+
+13 — Admin content copy (nice messages you can reuse)
+
+Driver created:
+“Driver account created. Username: driver_bandra_1234. Temporary password shown once — please copy it and send to the driver securely. Driver will be in Pending Verification until admin verifies ID docs.”
+
+Verification success:
+“Documents verified. Driver Rohit Kumar is now Verified and Active.”
+
+Block message to driver:
+“Your account has been temporarily suspended. For support please contact +91-XXXXXXXXXX.”
+
+14 — Deliverables I would produce for you (if I implement)
+
+DB migration SQLs for the tables above.
+
+Express routes & controllers for all admin + driver endpoints listed.
+
+Multer file upload middleware + S3 upload helpers.
+
+Admin React pages (Delivery Partners list, create page, driver detail, assign modal).
+
+Driver React/mobile pages (login, assignments, status updates, POD upload).
+
+Role-based middleware + session invalidation.
+
+Notification worker (SMS/Email placeholder).
+
+Unit & integration tests for key flows.
+
+Postman collection for APIs.
+
+Deployment notes & secrets checklist.
+
+15 — Final checklist for you (what I need or you should prepare)
+
+S3 bucket or file storage credentials (or Replit file storage plan).
+
+SMS provider account (optional but recommended).
+
+Zone list (Bandra, Santacruz, Andheri) and any geo shapes if available.
+
+Admin email for notifications.
+
+Decision: will admin create credentials OR driver sign-up via OTP? (Recommend admin-created + OTP reset option).
+
+Decide retention & privacy for Aadhaar/PAN docs (mask or keep full image

@@ -1,0 +1,472 @@
+🚚 DELIVERY PARTNER APP – COMPLETE FEATURE BLUEPRINT
+
+(Everything you need to build now — extremely detailed)
+
+⭐ 1. Core Purpose of Delivery Partner App
+
+The Delivery Partner App is used by delivery boys to:
+
+✔ See Today’s Deliveries
+✔ Navigate route
+✔ Mark delivery as completed
+✔ Update delivery status
+✔ View pending COD collections
+✔ Collect cash & submit to admin
+✔ Report failed delivery
+✔ View customer instructions
+✔ View order/subscription details
+✔ Get daily earning summary
+⭐ 2. PAGES YOU MUST BUILD (8 Screens)
+1️⃣ Login Screen
+
+Partner enters phone number + password.
+
+API: /api/delivery/login
+
+On success → redirect to dashboard.
+
+UI:
+
+Logo
+
+Phone Input
+
+Password Input
+
+Login Button
+
+Forgot Password (optional)
+
+2️⃣ Delivery Dashboard (Home Page)
+
+Shows everything for today:
+
+📦 TODAY'S SUMMARY (Top Cards)
+
+Total Deliveries Today
+
+Completed Deliveries
+
+Pending Deliveries
+
+Failed Deliveries
+
+Total Cash to Collect
+
+Cash Collected
+
+🔘 Buttons:
+
+View Today’s Deliveries
+
+View COD Pending
+
+Start Delivery Route
+
+My Earnings
+
+Help / Call Admin
+
+API:
+GET /api/delivery/today/:partnerId
+
+3️⃣ Today’s Deliveries List
+
+List of all deliveries assigned today:
+
+Layout:
+[Customer Name]
+[Address]
+[Product/Qty]
+[Time Slot]
+[Payment: COD ₹xx / Prepaid]
+[Buttons: Start | Completed | Failed | Navigate]
+
+Each Delivery Card Contains:
+
+Customer name
+
+Address (full + landmark)
+
+Google Maps link button
+
+Phone number (call button)
+
+Delivery time slot
+
+Type: Subscription / Order
+
+Items list
+
+COD amount
+
+Notes from customer (optional)
+
+Special instruction (optional)
+
+Buttons
+Button	Action
+➤ Start Delivery	marks “out for delivery”
+✓ Delivered	marks delivery complete
+✖ Failed	opens failure reason modal
+🧭 Navigate	opens Google Maps
+
+APIs Needed:
+
+PATCH /api/delivery/start/:deliveryId
+
+PATCH /api/delivery/complete/:deliveryId
+
+PATCH /api/delivery/failed/:deliveryId
+
+4️⃣ Delivery Details Page
+
+Inside each delivery:
+
+Show:
+
+Header: #DeliveryID • Today
+
+Customer info:
+
+Name
+
+Address
+
+Phone
+
+Instructions
+
+Items list
+
+Quantity
+
+Subscription details
+
+COD amount
+
+Buttons:
+
+Mark Delivered
+
+Mark Failed
+
+Navigate
+
+Call Customer
+
+Back
+
+Also show:
+
+“Delivery Timeline”
+
+Assigned → Out for delivery → Completed
+
+5️⃣ COD Collection Page
+
+For cash payments:
+
+Show:
+
+Total COD pending today
+
+List of all COD pending orders:
+
+Customer | Amount | Delivery ID | Collect Button
+
+Buttons:
+
+Collect Cash
+
+Mark Not Received
+
+View History
+
+APIs:
+
+PATCH /api/delivery/collect-cash/:deliveryId
+
+GET /api/delivery/cod-summary/:partnerId
+
+6️⃣ Failed Delivery Report
+
+Modal fields:
+
+Reason:
+
+Customer unavailable
+
+Wrong address
+
+Customer refused
+
+No cash (COD)
+
+Locked society gate
+
+Other (textbox)
+
+Upload photo (optional)
+
+Submit
+
+API:
+POST /api/delivery/fail
+
+7️⃣ Earnings Page
+
+For the delivery partner:
+
+Show:
+
+Today’s earnings
+
+Monthly earnings
+
+Total deliveries completed
+
+Per delivery earning (₹)
+
+Bonus (if any)
+
+API:
+GET /api/delivery/earnings/:partnerId
+
+8️⃣ Profile Settings
+
+Delivery partner details:
+
+Name
+
+Phone
+
+Assigned area
+
+Total deliveries completed
+
+Edit profile (optional)
+
+Logout
+
+⭐ 3. BACKEND FEATURES YOU MUST BUILD
+
+You need the following backend features:
+
+A. Delivery Assignment System
+
+Table: deliveryAssignments
+
+Columns:
+
+id
+partnerId
+deliveryId
+date
+status          // pending, out_for_delivery, delivered, failed
+codAmount
+collectedCash
+collectionStatus // pending, received, not_received
+location (optional)
+createdAt
+
+B. Delivery Start Endpoint
+PATCH /api/delivery/start/:deliveryId
+
+
+Updates:
+
+status = out_for_delivery
+
+timeStarted = now()
+
+C. Delivery Complete Endpoint
+PATCH /api/delivery/complete/:deliveryId
+
+
+Updates:
+
+status = delivered
+
+timeDelivered = now()
+
+Reduce stock if needed
+
+Mark subscription delivery completed
+
+D. Failed Delivery Endpoint
+PATCH /api/delivery/failed/:deliveryId
+
+
+Store:
+
+failedReason
+
+failedPhoto (optional)
+
+failedAt timestamp
+
+E. COD Collection Endpoint
+PATCH /api/delivery/collect-cash/:deliveryId
+
+
+Updates:
+
+collectedCash = amount
+
+collectionStatus = received
+
+Updates admin dashboard total revenue
+
+F. Today’s Delivery List Endpoint
+GET /api/delivery/today/:partnerId
+
+
+Return:
+
+all orders assigned today
+
+all subscription deliveries today
+
+COD amounts
+
+address + customer details
+
+⭐ 4. DATABASE TABLES YOU MUST ADD
+1. deliveryPartners
+id
+name
+phone
+passwordHash
+vehicleType
+assignedArea
+status
+createdAt
+
+2. deliveryAssignments
+id
+deliveryId
+partnerId
+date
+status
+codAmount
+collectionStatus
+collectedCash
+failedReason
+failedPhoto
+timeStarted
+timeDelivered
+createdAt
+
+3. codCollections
+id
+partnerId
+deliveryId
+amount
+status
+createdAt
+
+⭐ 5. ADMIN PANEL ADDITIONS
+
+Admin must see:
+
+🔥 Delivery Dashboard (New)
+
+Total deliveries
+
+Completed
+
+Pending
+
+Failed
+
+COD summary
+
+Admin Controls:
+
+Assign delivery partner
+
+Reassign order
+
+View all deliveries
+
+Filter by area
+
+Track partner's performance
+
+⭐ 6. REPLIT PROMPT FOR YOU
+
+(copy–paste directly into Replit AI)
+
+REPLIT PROMPT (Delivery Partner App)
+I want you to build a complete Delivery Partner App inside my existing Divine Naturals system.
+
+Requirements:
+
+1. Create new database tables:
+- deliveryPartners
+- deliveryAssignments
+- codCollections
+
+2. Build backend APIs:
+- POST /api/delivery/login
+- GET /api/delivery/today/:partnerId
+- PATCH /api/delivery/start/:deliveryId
+- PATCH /api/delivery/complete/:deliveryId
+- PATCH /api/delivery/failed/:deliveryId
+- PATCH /api/delivery/collect-cash/:deliveryId
+- GET /api/delivery/earnings/:partnerId
+
+3. Build frontend pages inside client/src/pages/delivery:
+- login.tsx
+- dashboard.tsx
+- today.tsx
+- delivery-details.tsx
+- cod.tsx
+- earnings.tsx
+- profile.tsx
+
+4. Each delivery card must show:
+Customer name, full address, phone, Google Maps link, time slot, subscription/order type, items, COD amount.
+
+5. Add buttons:
+Start Delivery, Mark Delivered, Mark Failed, Navigate, Call, Collect Cash.
+
+6. Everything must be connected to my existing subscriptions, orders, bills tables.
+
+7. Write the code cleanly, using:
+- React + TypeScript
+- Tailwind
+- Shadcn UI
+- React Query
+- Wouter routing
+- Express + Drizzle ORM backend.
+
+Make all features fully functional end-to-end.
+
+⭐ 7. WHAT TO BUILD FIRST → SECOND → THIRD
+STEP 1 (First): Delivery Partner App (Basic Version)
+
+Login
+
+Today’s deliveries
+
+Mark delivered/failed
+
+Navigate
+
+COD collection
+
+STEP 2 (Second): Admin Delivery Dashboard
+
+Assign deliveries
+
+Track status
+
+View COD summary
+
+STEP 3 (Third): Earnings + Routes
+
+Partner earnings page
+
+Route optimization

@@ -1,0 +1,275 @@
+✅ A. WHAT I NEED BUILT (FULL SYSTEM)
+1. Automatic Monthly Bill Generation (CRON SYSTEM)
+
+Create cron job / scheduler that:
+
+Runs on the 1st of every month at 00:05 AM
+
+Generates bills for every active user for previous month
+
+Collect these items:
+
+All subscription deliveries
+
+All product orders in that month
+
+Previous unpaid bill amount
+
+Penalty (if overdue > 5 days)
+
+Sets:
+
+billStatus = "unpaid"
+
+dueDate = bill.generatedAt + 5 days
+
+totalAmount = orders + subscriptions + penalty − discounts
+
+previousDue = unpaid amount from last bill
+
+Cron File:
+server/cron/generateMonthlyBills.ts
+
+2. Backend API — Admin Controls (FULL CRUD)
+
+Create/update file:
+server/routes/billing.routes.ts
+
+Add these routes:
+
+ADMIN ROUTES
+
+GET /admin/bills
+
+get all bills
+
+filter by: status, month, year, userId
+
+PATCH /admin/bills/:billId/pay
+
+mark bill as paid
+
+set paidAt = now
+
+set paymentMethod = "cash"
+
+PATCH /admin/bills/:billId/extend-due
+
+extend due date (admin chooses days)
+
+PATCH /admin/bills/:billId/add-penalty
+
+add penalty amount
+
+update totalAmount
+
+PATCH /admin/bills/:billId/add-discount
+
+reduce bill
+
+update totalAmount
+
+GET /admin/bills/:billId
+
+full breakdown (orders + subscription deliveries)
+
+All routes must use Drizzle ORM queries.
+
+🧍‍♂️ B. USER BILLING PAGES (FRONTEND)
+
+Create new folder:
+client/src/pages/billing/
+
+Build these pages:
+
+1. /billing (User Billing Dashboard)
+
+Show:
+
+Current Month Bill Card
+
+Month & Year
+
+Total Amount
+
+Status badge (unpaid / paid / overdue)
+
+Due date
+
+“Download PDF Invoice”
+
+“Mark As Paid (Cash)” button
+
+Previous Bills List
+
+Table:
+
+| Month | Amount | Status | Paid On | Download |
+
+2. /billing/:billId (Bill Detail Page)
+
+Show full bill breakdown:
+
+Bill Summary
+
+Month
+
+User name & address
+
+Total amount
+
+Status badge
+
+Table: Bill Line Items
+
+| Date | Description | Qty | Price | Total |
+
+Buttons
+
+Download PDF
+
+Back
+
+📄 C. ADMIN BILLING PAGES (FRONTEND)
+
+Route: /admin/billing
+
+Create full admin page showing:
+
+Top Filters
+
+Status: Unpaid, Paid, Overdue
+
+Month/Year dropdown
+
+Search by User
+
+Bills Table
+
+Columns:
+
+| Bill ID | Customer | Month | Amount | Status | Due Date | Actions |
+
+Actions:
+
+Mark Paid
+
+Extend Due Date
+
+Add Penalty
+
+Add Discount
+
+View Bill
+
+📄 D. PDF INVOICE GENERATION
+
+Create backend utility:
+
+server/utils/generateInvoice.ts
+
+Invoice must contain:
+
+Customer name
+
+Address
+
+Bill month & year
+
+Bill ID
+
+Due Date
+
+Summary section
+
+Table of charges
+
+Total payable
+
+Status
+
+Use HTML template → convert to PDF using:
+
+html-pdf OR pdf-lib OR puppeteer (your choice)
+
+Create route:
+
+GET /bills/:billId/pdf
+
+Frontend downloads file.
+
+🧠 E. DATABASE — ENSURE THESE FIELDS EXIST
+
+In bills table:
+
+id
+
+userId
+
+month
+
+year
+
+orderAmount
+
+subscriptionAmount
+
+penalty
+
+discount
+
+previousDue
+
+totalAmount
+
+status (“unpaid”, “paid”, “overdue”)
+
+dueDate
+
+paidAt
+
+paymentMethod
+
+createdAt
+
+If missing fields → add via migration.
+
+🔁 F. BILL STATUS AUTO-UPDATE LOGIC
+
+Every day at 02:00 AM:
+
+If bill.status == "unpaid" AND today > dueDate
+→ bill.status = "overdue"
+
+🎨 G. FRONTEND UI STYLING
+
+Use same styles as:
+
+Shop page
+
+Admin dashboard
+
+Billing mock pages
+
+Use Shadcn UI:
+
+Cards
+
+Tables
+
+Badges
+
+Buttons
+
+Dialogs
+
+🧪 H. EVERYTHING MUST WORK END-TO-END
+
+✓ Bill created automatically
+✓ Stored in database
+✓ Shown in admin panel
+✓ Shown in user app
+✓ Admin can edit
+✓ User can download PDF
+✓ Status updates daily
+✓ Admin can mark as paid

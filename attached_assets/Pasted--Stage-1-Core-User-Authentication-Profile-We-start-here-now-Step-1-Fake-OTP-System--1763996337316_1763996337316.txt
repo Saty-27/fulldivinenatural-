@@ -1,0 +1,131 @@
+🎯 Stage-1 — Core User Authentication + Profile
+
+(We start here now)
+
+🔹 Step-1 → Fake OTP System
+
+(no paid SMS yet)
+✔ Phone login → Generate always OTP = 1234
+✔ Verify OTP → Create user in DB if first time
+
+🔹 Step-2 → Personal Details Form
+
+(After OTP verified)
+👉 Name, Email, Gender, DOB (optional), Profile Image
+📌 Save in database
+📌 Required before entering app
+
+🔹 Step-3 → Address Setup
+
+📍 GPS select
+📍 Save default delivery address
+→ After submit → Redirect to Home
+
+🎯 Stage-2 — Milk Subscription System
+
+(Your business backbone)
+
+🔹 Step-4 → Subscription Create API
+
+User selects:
+
+Product (Milk)
+
+Quantity (1L, 1.5L, 2L…)
+
+Frequency (Daily / Weekly)
+
+Delivery Slot (Morning/Evening)
+
+Start Date
+
+📌 Save in DB
+📌 Show cost instantly (price × quantity × days)
+📌 Set status = ACTIVE
+
+🔹 Step-5 → Pause / Resume Subscription
+
+Backend API:
+
+Action	Result
+Pause	No delivery + No billing for paused days
+Resume	Continue as normal
+🔹 Step-6 → Auto Billing Every 5 or 10 Days
+
+(You asked for this ✔)
+
+Cycle Example:
+
+Jan 1 – Jan 10 → Bill-1
+Jan 11 – Jan 20 → Bill-2
+Jan 21 – Jan 30 → Bill-3
+
+
+🔸 If user doesn’t pay → Subscription goes Pending Payment
+🔸 Admin sees unpaid bills
+
+🎯 Stage-3 — Orders + Cart
+
+(Shop page becomes REAL)
+
+🔹 Step-7 → Add to Cart API
+
+User selects item → stored in DB
+Show cart count badge working
+
+🔹 Step-8 → Checkout + Place Order
+
+Payment method:
+
+COD first ✔
+
+Online Payment later (Razorpay)
+
+🔽 Automatic actions:
+✔ Stock reduce
+✔ Order status → PENDING
+✔ Generate invoice number
+✔ Show tracking in Orders page
+
+🎯 Stage-4 — Wallet + Payments
+
+(Not now — after subscription & orders)
+
+🔹 Step-9 → Wallet Ledger
+
+Credit/Debit entries
+Cashback support later
+
+🔹 Step-10 → Loyalty Points
+
+Every order → rewards points
+
+🎯 Stage-5 — Notifications + Support
+
+(Last stage of development)
+
+Real notifications for order status change
+
+Support ticket sending email + backend log
+
+🧱 MASTER DEVELOPMENT ORDER (Full List)
+Priority	Feature	Timeline
+1️⃣	Fake OTP + Auth	1 day
+2️⃣	Personal Details Page + API	1 day
+3️⃣	Address Setup + API	1 day
+4️⃣	Milk Subscription Create API	3 days
+5️⃣	Pause/Resume + Billing Cycle	5 days
+6️⃣	Cart + Order Placement	4 days
+7️⃣	Order Tracking + Invoice	2 days
+8️⃣	Wallet + Cashback	Later
+9️⃣	Loyalty + Offers	Later
+🔟	Customer Notifications	Later
+💡 Minimum Viable Product (MVP)
+
+To launch business in real world you only need:
+
+✔ Login + Address
+✔ Milk Subscription
+✔ Billing every 10 days
+✔ Orders from Shop
+✔ Admin managing products & orders

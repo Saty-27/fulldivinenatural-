@@ -1,0 +1,281 @@
+✅ 🚀 ULTRA-DETAILED PROMPT — BUILD USER BILLING PAGE (/billing)
+
+(AI-generated images allowed, responsive UI, premium styling, perfect UX)
+
+🎯 GOAL
+
+Build a complete User Billing Page for a dairy shop application where customers receive monthly bills, pay online, download PDFs, and track billing history.
+This must match the design quality of modern fintech dashboards like PhonePe, CRED, Groww, Paytm.
+
+📌 PAGE ROUTE
+
+/billing
+
+🖥️ PAGE STRUCTURE
+
+Make a full-screen, fully responsive billing dashboard with:
+
+Top Header Section
+
+Current Month Bill Card
+
+Actions Section (Pay / Download)
+
+Billing Breakdown Section
+
+Billing History Table
+
+Empty State Design
+
+Use soft shadows, rounded corners (12px), white cards, green–blue color palette.
+
+🔥 1. HEADER SECTION (Hero style)
+Layout:
+
+A premium header bar with:
+
+Title: “🧾 Monthly Billing”
+
+Subtitle: “View and manage your dairy bills”
+
+Gradient background (Green → Blue)
+
+Padding: 24px
+
+Text color: White
+
+Show current month: “Billing for: March 2025”
+
+🔥 2. CURRENT MONTH BILL CARD
+Large Highlight Card:
+
+White card, padding 20px, rounded 12px, shadow.
+
+Top Row:
+
+Bill Status Badge
+Use 3 statuses dynamically:
+
+🟢 PAID
+
+🟡 PENDING
+
+🔴 OVERDUE
+
+Amount Section:
+
+Big bold premium typography:
+
+₹ 1,850.00
+Total Amount to Pay
+
+Due Date:
+Due Date: 5 April 2025
+Remaining Days: 3 Days Left
+
+
+Use red color if overdue, green if paid.
+
+Penalty Handling:
+
+If overdue, show:
+
+⚠️ Late Fee Added: ₹50
+
+🔥 3. BILL ACTIONS SECTION
+
+Two main buttons, full-width on mobile:
+
+1) PAY NOW
+
+Big green button
+
+Icon: 💳
+
+Text: “Pay Online”
+
+On click: trigger Razorpay/UPI intent
+
+Floating animation (subtle)
+
+2) DOWNLOAD PDF
+
+Blue outline button
+
+Icon: 📄
+
+Text: “Download PDF”
+
+Also show:
+
+Payment Allowed: UPI / GPay / PhonePe / Paytm / NetBanking
+
+🔥 4. BILL DETAILS BREAKDOWN SECTION
+
+Show a collapsible detailed bill section.
+
+Title:
+
+“🧩 Bill Breakdown”
+
+Three collapsible cards:
+Card 1 — Subscription Deliveries
+
+Title: 🥛 Daily Milk Deliveries
+
+Subtitle: Quantity × days × price
+
+Show items like:
+
+Milk 1L × 30 days = ₹1,800
+Curd 500g × 4 days = ₹120
+
+Card 2 — One-Time Orders
+
+If user placed orders:
+
+Paneer 500g × 2 → ₹240
+Butter 200g × 1 → ₹60
+
+
+If none:
+“— No one-time orders this month —”
+
+Card 3 — Adjustments
+
+Show if present:
+
+Previous Due: ₹500
+Penalty: ₹50
+Admin Discount: -₹100
+
+🔥 5. BILLING HISTORY TABLE (BOTTOM SECTION)
+
+Title:
+📚 Previous Bills
+
+Table with 5 columns:
+
+Month	Bill Amt	Paid	Status	Action
+Jan 2025	₹1200	08 Jan	PAID	View
+Feb 2025	₹1580	05 Feb	PAID	View
+Mar 2025	₹1850	—	PENDING	View
+"View" Button:
+
+Opens modal with full bill details + PDF download.
+
+Empty State:
+
+If no history:
+
+📭 No previous bills yet.
+You will see past bills here once generated.
+
+🎨 STYLE GUIDE
+
+Use these colors:
+
+Primary Green: #16a34a
+
+Primary Blue: #3b82f6
+
+Warning Yellow: #facc15
+
+Error Red: #ef4444
+
+Text Dark: #111827
+
+Text Gray: #6b7280
+
+Card BG: #ffffff
+
+Page BG: #f3f4f6
+
+Radii:
+
+Inputs & cards: 12px
+
+Buttons: 8px
+
+Shadow:
+
+0 2px 8px rgba(0,0,0,0.08)
+
+Typography:
+
+Heading: 600, 24–28px
+
+Subheading: 500, 16px
+
+Body: 400, 14–16px
+
+🛠️ REQUIRED API CALLS
+GET /api/billing/current
+
+Returns:
+
+{
+  month: "March 2025",
+  amount: 1850,
+  penalty: 50,
+  previousDue: 200,
+  status: "PENDING",
+  dueDate: "2025-04-05",
+  subscriptionItems: [...],
+  orderItems: [...],
+  adjustments: [...]
+}
+
+GET /api/billing/history
+POST /api/billing/pay
+
+(Trigger Razorpay / UPI)
+
+🤖 AI IMAGES (OPTIONAL)
+
+Use 3D-style dairy illustrations for:
+
+Milk bottle icons
+
+Invoice paper icons
+
+Online payment icons
+
+Style: soft pastel, smooth gradients.
+
+🧱 RESPONSIVE RULES
+
+Mobile:
+
+Cards → 1 column
+
+Buttons → full width
+
+History table → scrollable
+
+Tablet/Desktop:
+
+2 columns where possible
+
+Bigger spacing
+
+🚀 OUTPUT REQUIREMENT
+
+Generate entire Billing Page with:
+
+✔ Responsive layout
+✔ Modern animations
+✔ Real data placeholders
+✔ Full structure
+✔ Clean component organization
+
+If you paste this whole prompt into Replit AI → It will generate EXACT UI and structure you want.
+
+If you want, I can now also make:
+
+✅ Admin Billing Page
+✅ Bill PDF Template
+✅ Razorpay Integration
+✅ Auto Monthly Bill Generator (cron job)
+
+Just say “NEXT”.

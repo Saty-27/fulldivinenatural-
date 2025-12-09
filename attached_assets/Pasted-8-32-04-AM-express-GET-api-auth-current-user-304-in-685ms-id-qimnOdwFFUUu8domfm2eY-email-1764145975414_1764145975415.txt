@@ -1,0 +1,46 @@
+8:32:04 AM [express] GET /api/auth/current-user 304 in 685ms :: {"id":"qimnOdwFFUUu8domfm2eY","email…
+📥 Before session middleware: {
+  method: 'POST',
+  path: '/api/orders',
+  cookiesHeader: 'connect.sid=s%3AkxZMFHHJU--hr1TszhsBrBcymOcNV6Lx.i0NonMRVnedcCORT67%2FZPZaGSTdZ6SNyHD%2BJ4wOGgfY'
+}
+📤 After session middleware: {
+  method: 'POST',
+  path: '/api/orders',
+  sessionId: 'kxZMFHHJU--hr1TszhsBrBcymOcNV6Lx',
+  sessionUserId: 'qimnOdwFFUUu8domfm2eY'
+}
+Error creating order: TypeError: db.sql is not a function
+    at <anonymous> (/home/runner/workspace/server/routes/order.routes.ts:98:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+8:32:07 AM [express] POST /api/orders 500 in 1385ms :: {"message":"Failed to create order"}
+📥 Before session middleware: {
+  method: 'POST',
+  path: '/api/orders',
+  cookiesHeader: 'connect.sid=s%3AkxZMFHHJU--hr1TszhsBrBcymOcNV6Lx.i0NonMRVnedcCORT67%2FZPZaGSTdZ6SNyHD%2BJ4wOGgfY'
+}
+📤 After session middleware: {
+  method: 'POST',
+  path: '/api/orders',
+  sessionId: 'kxZMFHHJU--hr1TszhsBrBcymOcNV6Lx',
+  sessionUserId: 'qimnOdwFFUUu8domfm2eY'
+}
+Error creating order: TypeError: db.sql is not a function
+    at <anonymous> (/home/runner/workspace/server/routes/order.routes.ts:98:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+8:32:36 AM [express] POST /api/orders 500 in 3367ms :: {"message":"Failed to create order"}
+📥 Before session middleware: {
+  method: 'POST',
+  path: '/api/orders',
+  cookiesHeader: 'connect.sid=s%3AkxZMFHHJU--hr1TszhsBrBcymOcNV6Lx.i0NonMRVnedcCORT67%2FZPZaGSTdZ6SNyHD%2BJ4wOGgfY'
+}
+📤 After session middleware: {
+  method: 'POST',
+  path: '/api/orders',
+  sessionId: 'kxZMFHHJU--hr1TszhsBrBcymOcNV6Lx',
+  sessionUserId: 'qimnOdwFFUUu8domfm2eY'
+}
+Error creating order: TypeError: db.sql is not a function
+    at <anonymous> (/home/runner/workspace/server/routes/order.routes.ts:98:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+8:32:39 AM [express] POST /api/orders 500 in 1353ms :: {"message":"Failed to create order"}

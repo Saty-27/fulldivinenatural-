@@ -1,0 +1,220 @@
+✅ DELIVERY PARTNER — FEATURE IMPLEMENTATION PROMPT (For Replit)
+🟩 MODULE: Delivery Partner Onboarding & Verification System
+
+Implement a complete onboarding flow for delivery partners with Admin-side account creation and Delivery-side document submission, followed by Admin verification.
+
+1️⃣ ADMIN PANEL — RESPONSIBILITIES
+Module: Create Delivery Partner Account
+
+Admin must be able to:
+
+Enter Full Name
+
+Enter Phone Number
+
+Select Assigned Zone / Area
+
+Choose Vehicle Type (Bike/Scooter/Auto/Van)
+
+Select Status → Active / Pending
+
+Auto-generate Username (e.g., driver_12345)
+
+Auto-generate Password
+
+System must generate:
+
+Unique username
+
+Random secure password
+
+Admin Actions After Creation:
+
+Provide login credentials to partner
+
+Assign delivery routes
+
+Enable partner to view deliveries
+
+Track partner performance
+
+2️⃣ DELIVERY PARTNER APP — RESPONSIBILITIES
+
+When delivery partner logs in for the first time:
+
+Show a mandatory Profile Completion Page before accessing dashboard.
+
+Partner must fill the following:
+
+A. Personal Details
+
+Full Name (pre-filled but editable)
+
+Profile Photo (camera upload)
+
+Date of Birth
+
+Gender
+
+Alternate Phone Number
+
+B. Address Details
+
+Full Address
+
+Street / Area / Locality
+
+City
+
+State
+
+Pincode
+
+Upload Address Proof (optional)
+
+C. Government ID Verification
+Aadhaar
+
+Aadhaar Number
+
+Aadhaar Front Image
+
+Aadhaar Back Image
+
+PAN Card
+
+PAN Number
+
+PAN Card Image
+
+Driving License
+
+License Number
+
+License Validity Date
+
+License Front Image
+
+License Back Image
+
+D. Vehicle Details
+
+Vehicle Number Plate
+
+RC Book Photo
+
+Insurance Photo (optional)
+
+E. Bank Details (for payouts)
+
+Bank Account Number
+
+IFSC Code
+
+Bank Name
+
+Account Holder Name
+
+Upload Passbook/Cancelled Cheque Image
+
+F. Declarations
+
+Two mandatory checkboxes:
+
+“I confirm my documents are genuine.”
+
+“I agree to the company terms and privacy policies.”
+
+3️⃣ ADMIN VERIFICATION PANEL
+
+After partner submits profile:
+
+Admin sees Status: Verification Pending with a “Review Details” button.
+
+Admin reviews:
+
+Aadhaar authenticity
+
+PAN authenticity
+
+Driving License
+
+Vehicle Details
+
+Bank Details
+
+Personal Photo
+
+Address
+
+Admin can perform:
+
+✔ Approve → Status = Verified
+
+✔ Reject → Status = Rejected, with remark
+
+✔ Block/Unblock Partner
+
+✔ Reset Password
+
+✔ Edit Assigned Zone
+
+✔ Update Vehicle Type
+
+✔ View Performance Stats
+
+✔ View Earnings Summary
+
+4️⃣ DELIVERY PARTNER FINAL FLOW
+
+Admin creates account
+
+Partner logs in
+
+Partner completes profile
+
+Admin verifies
+
+Partner can start accepting deliveries
+
+Partner updates statuses (pending → out for delivery → delivered)
+
+5️⃣ QUICK PERMISSIONS SUMMARY
+TASK	ADMIN	DELIVERY PARTNER
+Create login	✔	❌
+Provide username/password	✔	❌
+Enter name & phone	✔	❌
+Assign zone	✔	❌
+Upload Aadhaar	❌	✔
+Upload PAN	❌	✔
+Upload License	❌	✔
+Upload RC	❌	✔
+Upload Vehicle Details	❌	✔
+Upload Bank Details	❌	✔
+Upload Profile Photo	❌	✔
+Verify documents	✔	❌
+Approve partner	✔	❌
+Start deliveries	❌	✔
+Mark delivery status	❌	✔
+🎯 FINAL READY-TO-PASTE REPLIT PROMPT
+
+Copy-paste this exact line into Replit:
+
+Implement a Delivery Partner Onboarding & Verification System with the following rules:
+
+ADMIN SIDE:
+- Admin creates partner account with: Full Name, Phone Number, Zone, Vehicle Type, Status, Auto-Generated Username, Auto-Generated Password.
+- Admin ONLY creates login credentials and does NOT upload documents.
+- Admin later verifies all documents uploaded by partner.
+- Admin can approve, reject, block, unblock, edit zone, update vehicle type, reset password, and view performance data.
+- Admin sees “Verification Pending” until partner completes profile.
+
+DELIVERY PARTNER SIDE:
+- When partner logs in first time, force “Profile Completion Page”.
+- Partner must upload: Personal Details, Address, Aadhaar (number + front/back), PAN (number + photo), Driving License (number + front/back + validity), Vehicle Details (number plate + RC + insurance), Bank Details (account number + IFSC + bank name + passbook photo).
+- Partner must tick: “Documents are genuine” and “Agree to terms”.
+- After submission, partner status becomes “Verification Pending”.
+- Partner cannot accept deliveries until Admin verifies them.
+
+FLOW:
+Admin creates → Partner logs in → Partner submits documents → Admin verifies → Partner becomes Verified → Partner can deliver.

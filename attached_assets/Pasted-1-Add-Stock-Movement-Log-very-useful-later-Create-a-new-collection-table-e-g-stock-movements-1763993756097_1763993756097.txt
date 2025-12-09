@@ -1,0 +1,248 @@
+1. Add Stock Movement Log (very useful later)
+
+Create a new collection / table, e.g. stock_movements:
+
+Fields suggestion:
+
+id
+
+product_id
+
+type → "IN" | "OUT"
+
+reason → "ADMIN_ADJUST" | "ORDER_PLACED" | "ORDER_CANCELLED" | "RETURN" ...
+
+quantity → number (+ for IN, - for OUT)
+
+previous_stock
+
+new_stock
+
+created_at
+
+created_by (admin id, optional)
+
+Backend:
+
+Whenever you:
+
+Add stock from admin
+
+Reduce stock because of an order
+
+You also insert a row into stock_movements.
+
+👉 This helps you debug “why stock became 5 instead of 20?” in the future.
+
+Admin UI (optional for now but good):
+
+/admin/inventory/stock-history
+
+Filter by product
+
+Table like: Date | Product | Type | Qty | Old → New | Reason
+
+You can also show "Last 5 stock movements" under each product row later.
+
+🧑‍💻 Step 2 – Customers Management (Minimal but REAL)
+
+You can keep this simple for now, but it’s important.
+
+2.1. Add Customers List in Admin (/admin/customers)
+
+Backend:
+
+Create an endpoint like:
+
+GET /api/admin/customers
+
+
+Return fields like:
+
+id
+
+name
+
+phone
+
+email
+
+totalOrders
+
+totalSpent
+
+hasActiveSubscription (true/false)
+
+createdAt
+
+status (ACTIVE, BLOCKED etc. – optional)
+
+You can compute totalOrders and totalSpent either:
+
+On the fly (aggregate from orders table)
+
+Or store in customer document and update when new order is placed
+
+Admin UI:
+
+Table:
+
+| Name | Phone | Email | Total Orders | Total Spent | Subscription | Joined | Action |
+
+Action later can show “View details” (customer profile page).
+
+🧾 Step 3 – Orders Admin (Core Step Now)
+
+This is the most important next piece.
+
+3.1. Orders Table in Admin (/admin/orders)
+
+Backend endpoint:
+
+GET /api/admin/orders
+
+
+Return:
+
+orderId
+
+customer → name, phone
+
+items → [ { productId, name, quantity, unitPrice, totalPrice } ]
+
+totalAmount
+
+paymentStatus → "PENDING" | "PAID" | "FAILED"
+
+orderStatus → "PENDING" | "CONFIRMED" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED"
+
+createdAt
+
+deliveryDate
+
+deliverySlot
+
+address (short version)
+
+Admin UI:
+
+Table:
+
+| Order ID | Customer | Amount | Payment | Status | Date | Actions |
+
+Click row or “View” → open side panel / modal:
+
+Show full details (items, address, notes, etc.)
+
+Buttons:
+
+Change order status (Pending → Confirmed → Delivered)
+
+Change payment status (Pending → Paid)
+
+Cancel order
+
+3.2. Endpoint to Update Order Status
+PUT /api/admin/orders/:id/status
+body: { status: "CONFIRMED" | "DELIVERED" | "CANCELLED" }
+
+3.3. ⚙️ Connect Orders to Stock (Very Important)
+
+Rule:
+
+When order is confirmed → reduce stock
+
+When order is cancelled after confirmation → restore stock
+
+You can implement logic like:
+
+if (status changes FROM 'PENDING' TO 'CONFIRMED') {
+  for each item in order:
+    product.stock -= item.quantity
+    save product
+    insert stock_movement OUT
+}
+
+if (status changes FROM 'CONFIRMED' TO 'CANCELLED') {
+  for each item in order:
+    product.stock += item.quantity
+    save product
+    insert stock_movement IN (reason: 'ORDER_CANCELLED')
+}
+
+
+📌 Very important: only update stock when status changes, not every time the order is edited.
+
+🥛 Step 4 – Subscriptions (Basic Admin View)
+
+Don’t build full complex logic yet. Just visibility first.
+
+4.1. Subscription Model
+
+Fields suggestion:
+
+id
+
+customerId
+
+productId (for now, just milk)
+
+quantity (e.g. 1 litre)
+
+frequency → "DAILY" | "WEEKLY" | "MONTHLY"
+
+deliveryTimeSlot
+
+startDate
+
+isActive
+
+nextDeliveryDate
+
+4.2. Admin Endpoint
+GET /api/admin/subscriptions
+
+
+Return:
+
+Customer name / phone
+
+Product name
+
+Quantity
+
+Frequency
+
+Next delivery date
+
+Active/Inactive
+
+Admin UI:
+
+Table:
+
+| Customer | Product | Qty | Frequency | Next Delivery | Status |
+
+Later you can add:
+
+Pause / Resume subscription
+
+Change quantity
+
+📊 Step 5 – Dashboard Stats (Using Above)
+
+Once Products + Customers + Orders + Subscriptions are wired, you can show real numbers on /admin/dashboard:
+
+Total products
+
+Total customers
+
+Total orders
+
+Total revenue
+
+Active subscriptions
+
+Low stock products (e.g. stock < 10)
+
+Today’s orders / today’s revenue

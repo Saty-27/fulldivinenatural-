@@ -1,0 +1,152 @@
+# Divine Naturals — Extended Priority Plan with Vendor & Admin Enhancements
+
+## Updated Priority Order (with Vendor + Admin hierarchy)
+
+1. **Design System & Branding** (shared across all apps; rename app & admin branding to Divine Naturals)
+2. **User App (/main) – Milk Subscription + Orders MVP**
+3. **Vendor App (/vendor) – Vendor Dashboard (requirements, inward, revenue, driver logs)**
+4. **Admin Dashboard (/admin) – Root Admin + Sub Admin + Head Vendor authority with location-scoped visibility**
+5. **Delivery Partner (/delivery) – Assigned → Deliver (OTP/QR)**
+
+> Change: Vendor is now a core panel, with daily requirement mgmt + inward logging. Admin supports hierarchical roles: Super Admin → Head Vendor → Sub Admin.
+
+---
+
+## Vendor Panel — Features (per Vendor, scalable with hierarchy)
+
+* **Login for all Vendors** (phone OTP + role guard). Vendors are grouped under locations (e.g., Borivali, Santa Cruz, Andheri).
+* **Head Vendor (per location)** can see/manage all sub-vendors under their location.
+* **Vendor Dashboard Widgets**:
+
+  * **Daily Requirement**: liters required today, liters delivered, balance pending.
+  * **Circulated Milk**: total milk circulated (delivered vs. requirement).
+  * **Payments & Revenue**: how much vendor has to pay → estimated revenue breakdown.
+  * **Next-Day Requirement**: forecast from active Plans + ad‑hoc orders.
+* **Inward Entry** (send to Admin):
+
+  * Input fields: how much milk has arrived, delivered, balance pending.
+  * Driver details: name, age, mobile, optional uploads (Aadhar, PAN photos).
+* **Vendor Hierarchy**: Each location can have multiple vendors; a Head Vendor can see all vendor data within that location. Admin can see/edit/delete all vendors globally.
+
+---
+
+## Admin Panel — Extended Features
+
+### Hierarchy & Access
+
+* **Super Admin (Root)**: Full access. Can create/edit/delete vendors, head vendors, sub admins, users, products. Can delegate deliveries across vendors.
+* **Head Vendor (Location-based Admin)**: Manages all sub-vendors & customers in their location.
+* **Sub Admin (Scoped Admin)**: Limited authority within assigned location.
+
+### Location Authority & Permissions
+
+* Sub Admins can:
+
+  * View/manage customers only in their location.
+  * Access daily/weekly/monthly revenue reports.
+  * See payments: who paid, who is pending.
+  * Manage milk demand, user accounts, bills, transactions, complaints & feedback.
+  * Handle offers, promotions, notifications for their location only.
+* Head Vendors can see/approve/review sub-vendor activities in their location.
+* Super Admin can see everything.
+
+### Admin Dashboard Features
+
+* **Revenue Analytics**: Today revenue, last month revenue, calendar filter.
+* **Milk Management**: Demand vs. delivery vs. inward logs.
+* **User Management**: CRUD, payments, complaints.
+* **Vendor Management**: CRUD vendors, assign head vendor, link to sub admins.
+* **Product Management**: Add/edit/delete dairy products.
+* **Complaints & Feedback**: User complaints routed by location.
+* **Offers & Promotions**: Create targeted offers (location, vendor-specific).
+* **Reports & Analytics**: Export (CSV, PDF) of revenue, deliveries.
+* **Notification Center**: Alerts for delays, vendor issues, user queries.
+* **Staff Access Manager**: Define roles for staff (marketing exec, delivery support, etc.).
+* **Staff Marketing Monitor**: Each marketing staff assigned offline orders → show new orders captured, track lead source.
+* **Delegation (Swapping)**: If a vendor fails delivery, admin can delegate to another vendor/sub admin for fulfillment.
+* **Alert Zone**:
+
+  * Vendor delay notifications.
+  * User complaints.
+  * Pending deliveries.
+
+---
+
+## Updated Data Model (MongoDB)
+
+```ts
+// vendor.model.ts
+Vendor { _id, name, location, headVendorId?, parentVendorId?, subVendors:[ObjectId], requirementToday:Number, requirementTomorrow:Number, circulatedLiters:Number, revenueToday:Number, revenueTotal:Number, paymentsPending:Number, driverLogs:[Driver], createdAt }
+
+// driver.model.ts
+Driver { name, age, phone, aadharUrl?, panUrl?, assignedVendorId, createdAt }
+
+// admin.model.ts
+Admin { _id, name, phone, role:'SUPER'|'HEAD_VENDOR'|'SUB_ADMIN', locationScope?, permissions:{ milkMgmt, revenue, users, vendors, complaints, promotions, analytics, notifications, staff }, createdAt }
+```
+
+---
+
+## Vendor API Endpoints
+
+```
+POST   /vendor/login (otp)
+GET    /vendor/dashboard → daily req, circulated, payments, revenue, next-day forecast
+POST   /vendor/inward → {litersArrived, driver:{name, age, phone, aadharUrl?, panUrl?}}
+GET    /vendor/drivers → list
+
+// Head Vendor
+GET    /vendor/head/:id/subvendors → details
+```
+
+## Admin API Endpoints
+
+```
+// Auth & Roles
+POST   /admin/login → role scoped token
+
+// Vendors
+GET    /admin/vendors?location=SantaCruz
+POST   /admin/vendors → create vendor
+PATCH  /admin/vendors/:id → edit
+DELETE /admin/vendors/:id
+
+// Revenue & Reports
+GET    /admin/revenue/today?location=SantaCruz
+GET    /admin/revenue/monthly?location=SantaCruz
+
+// Delegation
+POST   /admin/delegate-delivery → {fromVendorId, toVendorId, orders:[...]}
+
+// Staff
+POST   /admin/staff → create staff (marketing exec)
+GET    /admin/staff/:id/monitor → daily leads/orders
+```
+
+---
+
+## UI Changes
+
+* **Admin Branding**: All references of “Krishna Chaitanya” renamed to **Divine Naturals**.
+* **App Branding**: App name → **Divine Naturals**.
+* **Admin Dashboard UI**: modern aesthetic (cards, graphs, clean typography).
+* **Vendor Dashboard UI**: simple cards with liters, revenue, inward logs.
+* **Alert Zone UI**: top bar notifications (delays, complaints).
+
+---
+
+## Next Sprint Recommendations
+
+1. Build Vendor Panel → dashboard + inward entry + driver logs.
+2. Extend Admin Panel → root vs head vs sub admin flows.
+3. Add Delegation & Alert system.
+4. Build Staff Marketing Exec monitor system.
+
+---
+
+## Immediate Next Actions (New Scope)
+
+1. **Extend Data Model**: add Vendor + Driver + Admin roles.
+2. **Scaffold Vendor App** (/vendor) → dashboard page with cards.
+3. **Admin Panel Enhancements**: role-based dashboard (Super, Head, Sub).
+4. **Alerts & Delegation APIs**.

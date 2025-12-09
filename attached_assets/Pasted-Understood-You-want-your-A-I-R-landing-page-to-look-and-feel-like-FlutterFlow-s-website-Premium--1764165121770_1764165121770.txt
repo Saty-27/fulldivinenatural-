@@ -1,0 +1,399 @@
+Understood.
+You want your A.I.R landing page to look and feel like FlutterFlow’s website:
+
+Premium
+
+Clean
+
+Glossy
+
+Animated
+
+Professional
+
+SaaS-grade
+
+Trusted
+
+World-class UI/UX
+
+Smooth transitions
+
+3D/AI-based visuals
+
+Hero video
+
+Super polished sections
+
+So now I will give you the FULL MASTER PROMPT you can paste into Replit / Vercel AI / Claude / any builder —
+and it will generate a FlutterFlow-style landing page for your A.I.R app.
+
+This is the single best prompt to recreate a premium SaaS landing page like FlutterFlow, but with A.I.R’s identity (finance, Emotional DNA, AI wealth autopilot).
+
+I’ll include:
+
+✔ Full layout
+✔ Hero section
+✔ Animations
+✔ AI-generated videos/images
+✔ Components
+✔ Color system
+✔ Typography
+✔ Icons
+✔ CTA buttons
+✔ Glow system
+✔ Finance theme
+✔ Emotional intelligence theme
+✔ Coding instructions
+✔ UI/UX interactions
+
+Let’s go.
+
+🚀 THE ULTIMATE LANDING PAGE GENERATION PROMPT (FlutterFlow-Style Website)
+⚡ Copy + Paste this into Replit or any AI builder
+
+PROMPT START
+
+🎨 Build a world-class SaaS landing page for my product called “A.I.R — Autonomous Investment Reagent.”
+The UI must look and feel 95% similar to FlutterFlow’s website (https://www.flutterflow.io/
+) —
+but with the personality of a futuristic AI Wealth Autopilot.
+
+This landing page should be:
+
+Super premium
+
+Startup-grade
+
+Clean
+
+Glassmorphic
+
+Highly animated
+
+Neon + finance themed
+
+Filled with movement
+
+With AI-generated visuals/videos where needed
+
+Smooth like Apple + futuristic like MidJourney
+
+🎯 OVERALL DESIGN RULES
+🟣 Color Palette
+
+Use a tech + finance palette:
+
+Deep Navy #050013
+
+Electric Purple #6C63FF
+
+Cyan #00F5A0
+
+Neon Blue #3A86FF
+
+Gradient: Purple → Blue → Cyan (soft glow)
+
+✨ Typography
+
+Headings: Orbitron (sci-fi, premium)
+
+Subheadings: Inter SemiBold
+
+Body Text: Inter Regular
+
+🔮 Visual Style
+
+Make it look like:
+
+FlutterFlow homepage
+
+Apple Vision Pro style
+
+Futuristic finance platform
+
+Neon glow + glassmorphism
+
+Smooth gradients
+
+3D objects subtly floating
+
+Ambient particle animations
+
+🎬 Animations
+
+Use:
+
+Fade in
+
+Slide up
+
+Parallax
+
+Floating particles
+
+Hover scale
+
+Button glow
+
+Section-triggered animations
+
+Continuous background movement
+
+🧠 PAGE STRUCTURE (Build exactly like this)
+1️⃣ HERO SECTION (must look like FlutterFlow hero)
+Layout:
+
+Full-width
+
+Huge headline
+
+Sub-headline
+
+AI-generated animated video background
+
+3 CTA buttons
+
+Floating glowing particles
+
+Soft gradient background
+
+Content:
+
+Headline:
+“Build Wealth With AI. Zero Emotions. Maximum Intelligence.”
+
+Sub-headline:
+“A.I.R is the world’s first Emotion-Intelligent Wealth Autopilot that protects your money from fear, greed, panic, and FOMO.”
+
+CTA Buttons:
+
+“Try AI Agent” (Primary gradient)
+
+“Analyze My Portfolio” (Glass outline)
+
+“Watch Demo” (Video icon + glow)
+
+Hero Visual (AI-generated):
+
+Generate a video of a:
+
+Futuristic holographic brain
+
+Data streams flowing
+
+Neon finance charts
+
+Emotional waves moving
+
+Wealth signals pulsing
+
+The video must loop smoothly just like FlutterFlow’s hero video.
+
+2️⃣ TRUST STRIP (like FlutterFlow’s “trusted by developers”)
+
+Logos of:
+
+Zerodha
+
+Upstox
+
+AngelOne
+
+CoinDCX
+
+Kuvera
+
+INDmoney
+
+Use glowing monochrome icons only.
+
+3️⃣ USP SECTION (FlutterFlow card style)
+
+3–4 gradient cards:
+
+“Emotion Intelligence Engine”
+
+“Autonomous Market Analysis”
+
+“Smart Asset Allocation (Stocks, Gold, Bonds)”
+
+“AI Investment Agent”
+
+Cards must animate on hover (lift + glow).
+
+4️⃣ EXPLAINER SECTION — “How A.I.R Works”
+
+Exactly like FlutterFlow’s “Build visually” section.
+
+Left: text
+Right: AI-generated animation or video
+
+Steps:
+
+Detect Emotions
+
+Analyze Markets
+
+Build Emotional DNA
+
+Optimize Portfolio
+
+Protect Wealth
+
+Include a vertical scroll animation timeline.
+
+5️⃣ EMOTIONAL DNA SECTION (very premium)
+
+Animated 3D brain + glowing neural network.
+
+Elements:
+
+Fear Spike
+
+Greed Curve
+
+FOMO Wave
+
+Panic Trigger
+
+Stability Index
+
+Make it scroll-animated like FlutterFlow’s interactive sections.
+
+6️⃣ FEATURES GRID (FlutterFlow style)
+
+6 clean tiles:
+
+Real-time sentiment tracking
+
+AI-based rebalancing
+
+Multi-asset support
+
+Emotional risk alerts
+
+Behavioral finance engine
+
+Future wealth forecasting
+
+Use Lucide icons + neon effects.
+
+7️⃣ DEMO VIDEO SECTION
+
+Add a hero mockup video like FlutterFlow.
+
+AI-generate a UI preview showing:
+
+Emotional DNA dashboard
+
+AI agent chat
+
+Market heatmap
+
+Portfolio growth chart
+
+Display inside a glowing laptop frame.
+
+8️⃣ SECTOR EMOTIONS SECTION (Interactive)
+
+6 animated sentiment cards:
+
+Tech
+
+Pharma
+
+Auto
+
+Energy
+
+Finance
+
+Real Estate
+
+Bars should animate upward when section scrolls into view.
+
+9️⃣ TESTIMONIALS SECTION
+
+Use FlutterFlow-style minimal cards:
+
+Founder quotes
+
+Investor quotes
+
+User trust statements
+
+Light glow & rotation on hover.
+
+🔟 PRICING SECTION (FlutterFlow style)
+
+3 plans:
+
+Starter
+
+Trader
+
+Pro Investor
+
+Use:
+
+Simple grid
+
+Toggle monthly/annual
+
+Highlight middle plan
+
+1️⃣1️⃣ CTA FOOTER SECTION
+
+Huge CTA banner:
+
+“Build Wealth Scientifically. Leave Emotions Behind.”
+
+Glow button → “Get Started with A.I.R”
+
+1️⃣2️⃣ FOOTER
+
+Clean grid:
+
+About
+
+Docs
+
+Support
+
+Contact
+
+LinkedIn
+
+Privacy
+
+Security
+
+🔧 TECH REQUIREMENTS
+
+Fully responsive
+
+All animations GPU-accelerated
+
+No emojis
+
+Use only minimal icons
+
+Use AI-generated video where needed
+
+Keep loading speed optimized
+
+Replit must generate HTML + CSS + React components
+
+Include smooth transitions and parallax
+
+PROMPT END
+
+🚀 This will make your landing page:
+✔ Look like FlutterFlow
+✔ Feel premium
+✔ Professional SaaS-level
+✔ Perfect for judges and investors
+✔ Instantly impressive
+✔ Emotional + financial + futuristic
+✔ Market-ready

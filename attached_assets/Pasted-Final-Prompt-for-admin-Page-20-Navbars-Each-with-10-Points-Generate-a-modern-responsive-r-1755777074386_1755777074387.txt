@@ -1,0 +1,230 @@
+Final Prompt for /admin Page (20+ Navbars, Each with 10+ Points)
+👉 Generate a modern, responsive, role-based Admin Dashboard at URL /admin with the following requirements:
+Global Requirements:
+Sidebar with 20+ navbars (listed below).
+Each navbar should have at least 10 detailed widgets/points.
+Show cards, graphs, charts, tables, alerts, shortcuts, KPIs, and quick filters.
+Use light/dark mode toggle.
+Top navbar: search, notifications, profile menu.
+Role-based access (Admin, Vendor, Subvendor, Delivery Partner, Customer).
+Mobile + desktop responsive.
+1. Dashboard (Main Overview)
+Total Vendors, Subvendors, Delivery Partners, Customers
+Today’s milk circulation vs. requirement (graph)
+Revenue (Today, Week, Month, Year)
+Alerts (low supply, pending payments, complaints)
+Quick Action shortcuts (Add vendor, Add delivery, Collect payment, Resolve complaint)
+Profit vs. Expense chart
+Top performing vendors list
+Pending orders table
+Supply-demand prediction AI widget
+Notification feed
+2. Vendors
+Vendor list with status (active, inactive)
+Vendor performance KPIs (circulation, payments, ratings)
+Revenue contribution per vendor (graph)
+Daily/weekly requirement vs. supply (chart)
+Payment settlement status
+Vendor complaints log
+Vendor contracts & documents
+Vendor onboarding progress
+Top 5 vendors (leaderboard)
+Quick Action: Add/Edit/Delete vendor
+3. Subvendors
+Subvendor list (with parent vendor)
+Daily circulation & supply logs
+Subvendor revenue contribution
+Pending dues
+Attendance/active status log
+Ratings & reviews
+Alerts: Missing delivery / low supply
+Supply-demand chart per subvendor
+Top performing subvendors
+Quick Action: Assign vendor, Revoke license
+4. Delivery Partners
+Active vs inactive delivery boys
+Daily routes assigned (map view)
+Deliveries completed vs pending (graph)
+Complaints received
+Salary & payment status
+GPS tracking (real-time map)
+Performance rating
+Delivery time efficiency (avg time/order)
+Quick Action: Assign route, Add new partner
+Accident or issue reports
+5. Customers
+Active vs new customers
+Subscription type (daily, weekly, monthly)
+Consumption trends (graph)
+Payment history
+Pending payments
+Complaints & feedback
+Loyalty points status
+Top 10 bulk customers
+New customer onboarding status
+Quick Action: Add customer, Send invoice
+6. Milk Circulation
+Total milk procured today
+Total distributed vs required (graph)
+Region-wise circulation (map)
+Over-supply & under-supply alerts
+Forecast demand for next week (AI widget)
+Wastage analysis (spoilage)
+Vendor-wise supply
+Shift-wise supply (Morning/Evening)
+Historical trends (month-wise)
+Quick Action: Update circulation
+7. Revenue & Finance
+Total revenue (Today, Week, Month, Year)
+Expense breakdown (Salary, Logistics, Supply, Misc)
+Profit vs Loss chart
+Outstanding payments (vendors/customers)
+Bank settlements pending
+Region-wise revenue contribution
+Vendor payment settlements
+Refunds/adjustments
+Tax & GST calculation logs
+Quick Action: Generate invoice, Export report
+8. Requirements & Forecast
+Today’s requirement vs. actual supply
+Weekly requirement forecast
+Seasonal trends (Summer/Winter demand)
+AI-powered prediction model
+Alerts for understock
+Vendor vs requirement match
+Future shortage prediction
+Graphs: 7-day, 30-day, 90-day projections
+Recommendations (buy more stock, assign vendors)
+Quick Action: Adjust forecast
+9. Complaints & Support
+Total complaints pending/resolved
+Category-wise complaints (delivery, payment, supply)
+Average response time
+Top repeating complaints
+Vendor-wise complaints log
+Customer satisfaction score (CSAT)
+Escalation matrix
+Live chat/ticket system
+SLA performance report
+Quick Action: Assign complaint, Close ticket
+10. Reports & Analytics
+Sales report (daily, weekly, monthly)
+Vendor report
+Delivery efficiency report
+Complaint trend report
+Profit/loss statement
+Export CSV/PDF option
+Region-wise sales report
+Top 10 vendors/customers analytics
+Custom report builder
+Quick Action: Generate & share report
+11. Inventory Management
+Current stock levels (milk, packaging material, bottles, crates, etc.)
+Stock movement (inflow/outflow logs)
+Expiry tracking (for perishable products)
+Daily wastage report (spillage, spoiled milk)
+Stock vs requirement prediction (AI-based)
+Vendor-wise stock allocation
+Minimum stock alerts (low inventory warnings)
+Purchase order requests (automatically trigger procurement)
+Supplier management (list of suppliers, contracts)
+Historical stock trends (week/month/year)
+12. Invoices & Payments
+Pending invoices (with due dates)
+Paid invoices (with receipt download option)
+Auto-generated invoices for vendors/subvendors
+Customer billing (if direct to consumer)
+Payment modes (UPI, cash, card, NEFT) breakdown
+Refund & adjustment logs
+Outstanding payment alerts
+Revenue summary (Today, Week, Month, Year)
+Payment reconciliation with bank account
+GST & tax calculations (auto-included in invoices)
+13. Employee Management
+List of all employees (Admin staff, Delivery staff, Support staff)
+Attendance (daily/weekly/monthly)
+Salary & payroll reports
+Shift management (assign timings & roles)
+KYC details (Aadhar, PAN, Driving License)
+Performance metrics (delivery speed, accuracy, complaints handled)
+Rewards & recognition system
+Leave requests & approval system
+Role-based access control
+Emergency contact info storage
+14. Role & Permissions
+Create new roles (Admin, Vendor, Subvendor, Delivery Partner, Finance)
+Assign/revoke permissions per role
+Granular access (Read, Write, Delete, Approve)
+Multi-level hierarchy (Super Admin > Head Vendor > Vendor > Subvendor)
+Audit trail of permission changes
+Role cloning (copy settings from one role to another)
+Temporary role assignment (for substitutes)
+Session timeout & re-login policies
+Restriction by IP/location (if needed)
+Role activity dashboard (who accessed what)
+15. Settings & Configurations
+General system settings (logo, theme, timezone)
+Notification settings (SMS, WhatsApp, Email alerts)
+Payment gateway setup (Razorpay, PayU, Stripe, etc.)
+Data backup & restore options
+Language & localization settings
+Pricing rules (dynamic pricing by demand/supply)
+Threshold configurations (low stock, high demand alerts)
+Holiday & delivery schedule configuration
+Third-party API integrations (logistics, ERP, CRM)
+Auto-update preferences (system patches & upgrades)
+16. Bank Accounts & Finance
+Linked bank accounts overview
+Daily cash flow reports
+Profit & loss statements
+Account balance tracking
+Loan & credit facility management
+Expense tracker (fuel, maintenance, salaries)
+Automated reconciliation with invoices
+Financial forecasting (AI-based revenue prediction)
+Vendor payout schedules
+Export financial data (Excel, PDF, Tally integration)
+17. Audit Logs
+Login & logout activity (time, IP, device)
+Data modification logs (who changed what)
+Payment transaction logs
+Permission & role change history
+Failed login attempts & security alerts
+Vendor-subvendor activity logs
+Delivery partner status updates
+Invoice edit history
+Automatic anomaly detection (suspicious activities)
+Export audit trail (for compliance/legal)
+18. Marketing Campaigns
+Ongoing campaigns (discounts, offers, schemes)
+Customer segmentation (area, frequency, spend)
+Campaign performance reports (reach, conversion)
+SMS/Email/WhatsApp blast management
+Referral program tracking
+Special festive campaign setups
+Discount coupon generator
+Vendor & subvendor promotional campaigns
+ROI analysis of campaigns
+Integration with social media ads
+19. Loyalty Programs
+Customer loyalty points (per liter purchased)
+Redemption options (discounts, free liters, gifts)
+Vendor loyalty rewards (based on performance)
+Tier-based system (Silver, Gold, Platinum customers)
+Referral bonuses (bring new customers/vendors)
+Expiry tracking of loyalty points
+Personalized offers based on loyalty status
+Leaderboard for top customers/vendors
+Notifications on earned/redeemed points
+Loyalty impact analytics (retention rate)
+20. System Health Monitoring
+Server uptime status
+API performance & response time
+Database health (queries, slow performance alerts)
+Error logs & crash reports
+Storage monitoring (space used vs available)
+CPU/RAM utilization dashboard
+Automated backup status
+Security alerts (failed logins, unusual access)
+Load balancing reports (high traffic times)
+Recovery & failover status

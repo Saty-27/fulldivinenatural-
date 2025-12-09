@@ -1,0 +1,97 @@
+🟢 Final Prompt for Admin Panel (/admin)
+System Context:
+You are designing a Milk Dairy Management System on Replit with multiple roles (Admin, Head Vendor, Vendor, Sub-Vendor, Delivery Partner). The /admin page is the master control hub for the Admin but also includes login portals and dashboards for different roles.
+🔑 Role-Based Access
+Admin (Super Admin)
+Can create / edit / delete:
+Vendors (e.g., Borivali, Santacruz, Andheri, etc.)
+Sub-Vendors under Vendors
+Delivery Partners (assign to Vendor/Sub-Vendor)
+Products (Milk categories: Cow, Buffalo, Flavored Milk, Paneer, etc.)
+Full access to financial reporting (daily, weekly, monthly revenue, vendor/sub-vendor earnings, payments).
+Can monitor KYC documents of delivery partners.
+Can override or adjust requirements/deliveries (e.g., if vendor entered wrong quantity).
+Can generate exportable reports (Excel/PDF).
+Head Vendor (Zone Head)
+Example: Santacruz head vendor oversees all 4 sub-vendors in Santacruz.
+Can view/manage:
+Daily requirement of all sub-vendors.
+Previous requirements & next-day requirements.
+Circulated milk vs. pending milk.
+Revenue (daily, weekly, monthly) of each sub-vendor.
+Can check delivery partner assignments & performance.
+Dashboard includes Sub-Vendor comparison (graph-based).
+Can approve/reject sub-vendor reports before sending to Admin.
+Vendor (Individual Area Vendor)
+Example: Santacruz Sub-Vendor 1
+Features:
+Enter Today’s requirement.
+Enter Next day requirement.
+See Previous requirements (history).
+Enter Circulated milk (delivered milk quantity).
+See per day earning, weekly earning, monthly earning.
+Upload Delivery partner details: Name, Age, Mobile (mandatory), Aadhaar/PAN (optional upload).
+Vendor can submit daily delivery report to Head Vendor & Admin.
+Sub-Vendor (Small Local Vendor under Vendor)
+Same as Vendor but with limited access only to their own shop data.
+Cannot see other vendor details.
+Submits daily requirement & delivery partner details.
+Delivery Partner (Driver/Transporter)
+Profile includes:
+Name (compulsory)
+Mobile number (compulsory)
+Age
+Aadhaar/PAN photo (optional upload)
+Assigned to Vendor/Sub-Vendor by Head Vendor or Admin.
+Can log milk picked-up vs delivered.
+📊 Admin Dashboard Pages
+1. Dashboard (Home)
+Total Milk Requirement (Today, Tomorrow, This Week).
+Total Circulated Milk.
+Total Earnings (Today, Weekly, Monthly).
+Pending Deliveries.
+Vendor/Sub-Vendor Performance Graph.
+Delivery Partner Status.
+2. Vendor Management
+Create/Edit/Delete Vendors.
+Assign Sub-Vendors.
+View Vendor Requirement Reports (daily, weekly, monthly).
+Approve or Reject Vendor submissions.
+3. Sub-Vendor Management
+Create/Edit/Delete Sub-Vendors under Vendors.
+Monitor individual sub-vendor data (requirements, earnings, delivery partner).
+Compare sub-vendor performance.
+4. Delivery Partner Management
+Add/Edit/Delete Delivery Partners.
+Assign to Vendor/Sub-Vendor.
+Verify KYC documents (Aadhaar/PAN).
+Delivery log (milk picked-up vs delivered).
+5. Requirement & Circulation
+Track Today’s Requirement vs Delivered Milk.
+Show shortages/excess (alerts if milk not delivered fully).
+Approve Vendor’s next-day requirement.
+6. Finance & Revenue
+Per Vendor/Sub-Vendor earning (daily/weekly/monthly).
+Delivery partner payment status.
+Admin revenue vs Vendor revenue.
+Export option (CSV/Excel/PDF).
+7. Reports
+Vendor-wise, Sub-Vendor-wise, Zone-wise, Delivery Partner-wise reports.
+Filter by date range (daily, weekly, monthly, yearly).
+Export as PDF/Excel.
+8. Settings & Access Control
+Manage Roles (Admin, Head Vendor, Vendor, Sub-Vendor, Delivery Partner).
+Reset Passwords / Deactivate Accounts.
+App settings (pricing per litre, commission %, bonuses).
+🛠️ Must-Have Features
+Tabs/Navigation: Dashboard | Vendors | Sub-Vendors | Delivery Partners | Requirements | Finance | Reports | Settings
+Search & Filters: By name, area, date, status.
+Graphs & Analytics: Bar/Line chart for requirement vs delivery, revenue growth.
+Notifications: Alerts for pending milk, missing delivery, KYC not uploaded.
+Export Data: Excel/PDF download for reports.
+Role-Based Login Pages:
+/admin/login → Admin
+/head-vendor/login → Head Vendor
+/vendor/login → Vendor
+/sub-vendor/login → Sub-Vendor
+/delivery/login → Delivery Partner

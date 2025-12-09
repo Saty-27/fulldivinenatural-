@@ -1,0 +1,216 @@
+Divine Naturals — Master Implementation Prompt
+Tagline: Pure. Fresh. Daily.
+Scope: Multi-app dairy delivery ecosystem — Customer (/main), Admin (/admin), Vendor (/vendor), Delivery (/delivery).
+Tech stack (target): React + TypeScript frontend, Express.js backend, PostgreSQL (Drizzle ORM). Mobile-first, Tailwind + shadcn/ui aesthetics.
+1 — High-level goals (what to deliver)
+Rename all apps and UI from Krishna Chaitanya → Divine Naturals (PWA, admin, mobile apps, manifests, titles).
+Implement a robust Vendor experience: daily requirement dashboard, circulated milk stats, payments due, estimated revenue, next-day forecast, inward submission with driver details and optional KYC images, ability to push inward reports to Admin. Support many vendors per location and Head Vendor → Sub Vendor hierarchy with logins.
+Implement Admin hierarchy and location scoping: Super Admin (global), Head Vendor (location scope), Sub Admin (location-scoped, limited permissions). Admins must be able to create/edit/delete vendors, assign heads, define sub-admins, delegate deliveries, view alerts, manage staff, and view analytics per location.
+Add delegation/swap feature: reassign orders/deliveries when a vendor fails. Keep audit logs.
+Add Staff monitoring (marketing offline orders): staff can add offline orders, and Admin can track conversions/leaderboards.
+Add Alert Zone: unified alerts for delays, low stock, complaints, inward logs requiring approval. Real-time via sockets or polling.
+Make UI modern, eco-minimal, and accessible. Provide clear acceptance criteria and testing checklist.
+2 — Branding & design system (must be applied everywhere)
+App title / manifest: Divine Naturals — Tagline: Pure. Fresh. Daily.
+Color tokens:
+Creamy White: #FFF9F2 (background)
+Soft Green: #8FCB81 (primary CTA)
+Forest Green: #2F6F4E (headings/accents)
+Pastel Blue: #A9D6E5 (info tints)
+Typography: Inter / Poppins, fallback Roboto; scale: 32/24/20/18/16/14/12.
+Layout: card-based, rounded corners (16–24px), soft shadow, 48px touch targets.
+Components: use shadcn/ui primitives where possible — Buttons, Cards, Inputs, Tables, Modals.
+Ensure accessible contrast & ARIA labels.
+3 — Roles & permissions (RBAC matrix)
+Define roles and what they can see/do. (Use exact wording for permission flags.)
+SUPER_ADMIN
+Scope: global across locations.
+Permissions: all (vendors, admins, staff, orders, analytics, settings, delegation, create/delete).
+HEAD_VENDOR
+Scope: one or more locations (e.g., Santa Cruz).
+Permissions: manage sub-vendors in scope, view location users, view financials for scope, approve inward logs, view alerts, receive admin notifications for scope.
+SUB_ADMIN
+Scope: single location assigned.
+Permissions: view/manage customers, orders, products, complaints, promotions, staff in location; cannot delete head vendor or change global system settings.
+VENDOR_USER (vendor staff account)
+Scope: single vendor entity.
+Permissions: submit inward logs, add driver records, view vendor KPIs, request delegations.
+DELIVERY_PARTNER
+Scope: assigned delivery manifests.
+Permissions: view assigned orders, confirm delivery via OTP/QR, upload photo proof, report issues.
+MARKETING_STAFF
+Scope: assigned location(s).
+Permissions: create offline orders/leads, view converted orders, view leaderboard.
+NB: All role checks must be enforced on server side (never trust client).
+4 — Key user stories & acceptance criteria (vendor & admin centric)
+Vendor stories
+Vendor login
+As a vendor staff, I log in with phone + OTP and land on my Vendor Dashboard for the correct vendor record.
+Acceptance: token issued, vendorId attached to session, UI shows vendor name & location.
+Vendor Dashboard (daily requirement)
+Dashboard displays: requirementToday (liters), circulatedLiters, paymentsPending, revenueToday, revenueTotal, requirementTomorrow (forecast).
+Acceptance: numbers are readable, and each card has a tooltip explaining the metric.
+Inward Entry (submit delivery to vendor)
+Vendor can create an inward record: litersArrived, litersDelivered, litersPending (calculated or manual), driver object (name, age, phone), optional files for aadhar and pan.
+The vendor clicks Send to Admin → the record is saved and visible to Head Vendor + Admin.
+Acceptance: record appears in vendor inward list and triggers an alert for Head Vendor/Admin.
+Driver records
+Vendor can add/edit drivers (name, age, phone, optional KYC images). Drivers can be selected in an inward entry.
+Acceptance: driver shows last inward they were associated with.
+Head vendor view
+Head Vendor sees all sub-vendors in their location (grid/list) with their KPI cards; can drill into a specific vendor.
+Acceptance: only sub-vendors in scope are visible; other locations are hidden.
+Forecast & payments
+Vendor can view next-day forecast (derived from active subscriptions + ad-hoc orders) and an estimated revenue that vendor will collect or receive.
+Acceptance: forecast is computed and explained in UI; vendor can mark expected incoming liters.
+Admin stories
+Admin hierarchy
+Super Admin can create Head Vendors, assign locations, create Sub Admins with location scope, and create vendor entities.
+Acceptance: Admin UI to create and list Admins with location scope fields; scopes enforced.
+Vendor CRUD & control
+Admin can create, edit, delete vendor entities and reassign vendors to different head vendors; can view all inward logs and driver KYC.
+Acceptance: all operations logged (audit trail), and deletions require confirmation.
+Delegation (Swap)
+If Vendor A cannot fulfil deliveries, Admin (or Head Vendor within scope) can select orders/deliveries and delegate them to Vendor B. Delegation generates a log with actor, timestamp, reason.
+Acceptance: delegated orders now appear in Vendor B’s assigned list; notification sent to Vendor B + Delivery Partner.
+Alerts & Notification Zone
+Unified alert feed shows incoming inward submissions needing review, delivery delays, complaints, low stock signals. Alerts have severity and can be assigned/resolved.
+Acceptance: alerts filterable by location & severity; clicking an alert opens contextual detail.
+Staff monitoring & offline orders
+Admin can add Marketing Staff and view number of offline orders each staff captured, conversions, and leaderboard. Staff can be assigned locations.
+Acceptance: per-staff stats displayed and exportable.
+Analytics & Reports
+Admin can view revenue: today, last 7 days, last month; can filter by location and vendor; export CSV/PDF. Calendar picker to filter.
+Acceptance: charts render and CSV exports match displayed data.
+5 — Data model (entities & fields — descriptive, not code)
+Core entities
+User — (customers + generic auth)
+userId, name, phone, email, role, addresses[], walletBalance, createdAt
+Vendor
+vendorId, name, locationName, headVendorId (null if top), parentVendorId (if sub), requirementToday, requirementTomorrowForecast, circulatedLiters, revenueToday, revenueTotal, paymentsPending, drivers[] (references), createdAt
+Driver
+driverId, name, age, phone, aadharUrl (optional), panUrl (optional), vendorId, createdAt
+InwardLog
+inwardId, vendorId, litersArrived, litersDelivered, litersPending, driver { name, age, phone, aadharUrl?, panUrl? }, reportedBy (vendorUserId), sentToAdmin (bool), status (PENDING/APPROVED/REJECTED), createdAt
+Subscription / MilkPlan
+planId, userId, vendorId, qtyL, frequency (DAILY/ALT/WEEKLY), slot, startDate, pauseRange, pricePerL, status
+Order
+orderId, userId, vendorId, items[], liters, totalPrice, status (PLACED/PREPARING/OUT/DELIVERED/FAILED), deliverySlot, deliveryDate, assignedDeliveryPartnerId, delegationLogId?, createdAt
+DeliveryPartner
+partnerId, name, phone, vehicleDetails, assignedOrders[], createdAt
+Admin
+adminId, name, phone, role (SUPER/HEAD/SUB), locationScope[] (strings), permissions (flags), createdAt
+DelegationLog
+logId, fromVendorId, toVendorId, orderIds[], delegatedByAdminId, reason, timestamp
+Alert / Notification
+alertId, type (DELAY/INWARD/COMPLAINT/LOW_STOCK), scope (location/vendor), severity (INFO/WARNING/CRITICAL), message, resolved (bool), createdAt
+Staff / MarketingStaff
+staffId, name, role, assignedLocations[], createdByAdminId, offlineOrdersCaptured[], createdAt
+Product
+productId, name, sku, type (MILK/DAIRY), unit, price, stock, expiryDate, vendorIds[] (if vendor-specific)
+6 — API & flow names (human readable endpoints you can provide to devs; not code)
+Authentication
+POST /auth/login — phone + OTP → returns session token
+POST /auth/refresh — refresh token
+Vendor (vendor app)
+GET /vendor/me/dashboard — returns KPI cards (requirementToday, circulated, payments, forecast)
+POST /vendor/inward — submit inward log with driver details + optional KYC URLs
+GET /vendor/inward — list inward logs (filter: date/status)
+POST /vendor/driver — add driver
+GET /vendor/drivers — list drivers
+PUT /vendor/requirement — vendor sets expected incoming liters for day
+POST /vendor/notify-admin — push a manual notification or escalate inward issue
+Admin (admin dashboard)
+GET /admin/vendors?location=... — list vendors in scope
+POST /admin/vendors — create vendor
+PATCH /admin/vendors/:id — update vendor
+DELETE /admin/vendors/:id — delete vendor
+POST /admin/admins — create sub admin/head vendor record with locationScope
+GET /admin/inwards?location=... — view pending inwards
+POST /admin/delegate — delegate orders {fromVendorId,toVendorId,orderIds,reason}
+GET /admin/alerts — list alerts
+GET /admin/reports/revenue?location=...&from=&to= — revenue report
+POST /admin/staff — create marketing staff
+GET /admin/staff/:id/monitor — get staff captures & conversions
+Delivery
+GET /delivery/assigned — delivery partner assigned orders
+POST /delivery/:orderId/confirm — confirm with OTP/QR and optional photo proof
+POST /delivery/:orderId/issue — report issue (not home/wrong address)
+7 — UI & UX screens (wireframe descriptions)
+Vendor app screens (priority)
+Login (phone + OTP) — Simple form and branding.
+Vendor Dashboard (Top)
+KPI cards in a single row: Requirement Today | Circulated Liters | Payments Due | Revenue Today | Next Day Forecast.
+Each card has an info icon explaining calculation method.
+Inward List — table of recent inward logs with status (Pending / Approved / Rejected). Click opens detail modal.
+Inward Form (modal / page)
+Fields: Liters Arrived, Liters Delivered, Liters Pending (auto calc), Driver (select/add), Optional upload buttons for Aadhar & PAN. Buttons: Save Draft / Send to Admin.
+Validation: no negative liters; driver phone required.
+Drivers Page — list of drivers, add/edit modal with KYC uploads.
+Sub-vendor Grid (for Head Vendor) — cards for each sub-vendor in location showing their KPIs and quick actions (message, create inward, request delegation).
+Alerts Bar — sticky at top for critical alerts.
+Admin dashboard screens (priority)
+Admin Login — with role selection if multiple accounts exist.
+Global KPI header — total revenue, today orders, unresolved alerts.
+Location selector — select Borivali, Santa Cruz, Andheri etc. Changes scope of pages.
+Vendor Management Page — list & CRUD; create head vendor; assign location; set quotas.
+Inward Review Page — list of inward logs pending approval with driver KYC preview; accept/reject with comments.
+Delegation Modal — choose failing vendor, select orders, pick recipient vendor, add reason (audit).
+Alerts & Notification Center — feed of alerts with actions.
+Staff Monitor & Leaderboard — marketing staff list and conversions.
+Reports & Analytics — interactive charts and calendar filters; export options.
+8 — Business logic notes (important rules)
+Forecasting (Next-day requirement): derive from active subscriptions for that vendor’s service area + ad-hoc shop orders. Show both a conservative and optimistic number.
+Payments pending (Vendor viewpoint): vendor can view amounts owed by customers (if vendor collects) and expected settlements from platform (if platform collects). Show breakdown (cash, digital).
+Inward approval flow: when a vendor sends an inward to admin, Head Vendor/Admin can approve or request changes. Until approved, vendor cannot mark that milk as fully available for dispatch if your process requires admin confirmation.
+Delegation safety: delegating an order should check vendor capacity and not exceed quota; if it does, require admin confirmation.
+KYC privacy: driver KYC images are sensitive — access only to authorized admins & head vendor, stored securely (signed URLs, limited TTL).
+Audit trail: every create/update/delete for vendors, inward logs, delegations, major notifications must be recorded with actorId, timestamp, and reason (if applicable).
+9 — Data privacy & compliance
+Mask PII when showing in lists (e.g., show phone as +91-98xxxxxx23) except where full info is required.
+For KYC images, keep limited retention (configurable), and enforce role-based retrieval.
+Use HTTPS / signed URLs for uploads. Note legal compliance for storing Aadhaar — if storing Aadhaar images is required, consult legal; ideally avoid storing full Aadhaar unless necessary; accept only as optional.
+10 — Sprint plan & priorities (concrete steps for Replit / dev team)
+Sprint 0 — Setup & Branding (1–2 days)
+Replace names and branding to Divine Naturals across repos, manifests, and UI.
+Add design tokens & Tailwind theme.
+Sprint 1 — Core Auth + Vendor Dashboard (3–5 days)
+Implement phone+OTP auth, role assignment for vendor/admin/head.
+Vendor dashboard view with KPI cards and inward list.
+Driver add/edit UI (no KYC upload yet).
+Sprint 2 — Inward flow + Admin review + Alerts (4–6 days)
+Inward form with optional KYC uploads, save and send to admin.
+Admin inward review page (approve/reject).
+Alerts feed via simple polling (upgrade to sockets later).
+Sprint 3 — Head Vendor hierarchy + Location Scoping (4 days)
+Create Head Vendor & Sub Vendor structure; Head Vendor UI to view sub-vendors in location.
+Admin create head vendors & assign locationScope.
+Sprint 4 — Delegation + Staff monitoring (4 days)
+Delegation modal & back-end flow.
+Staff model + offline order capture + leaderboard.
+Sprint 5 — Analytics, Exports, and polish (4 days)
+Revenue charts, calendar filters, CSV/PDF export.
+UI polish, accessibility check, PWA behaviors.
+Ongoing / Stretch
+Socket.io real-time alerts, route optimization, automated forecasting improvements.
+11 — Acceptance & QA checklist (use for testing)
+Vendor
+ Vendor login returns vendor context and KPI numbers are correct.
+ Inward form saves, validates values, and optional files upload correctly.
+ Inward shows up in Admin review feed.
+ Drivers can be added and selected in inward form.
+Admin
+ Super Admin can create Head Vendors, assign locations, and create Sub Admins.
+ Head Vendor sees only sub-vendors in their location.
+ Delegation reassigns orders and generates an audit log.
+ Alert feed shows inward submissions, delays, and complaints.
+General
+ Branding shows Divine Naturals in Title / Manifest / Admin header.
+ Permission enforcements prevent wrong location access.
+ KYC files accessible only to authorized roles.
+ Logs capture actor, action, target, timestamp for critical ops.
+12 — Handoff note for Replit / AI assistant
+When you paste this prompt to Replit AI or an LLM codegen agent, append the immediate action you want, e.g.:
+“Generate high-fidelity vendor dashboard UI screens and wireframes (no code), following the design tokens above.”
+“Create a detailed API spec document (OpenAPI style) for all vendor & admin endpoints referenced above.”
+“Produce test cases for the Inward flow and Delegation features.

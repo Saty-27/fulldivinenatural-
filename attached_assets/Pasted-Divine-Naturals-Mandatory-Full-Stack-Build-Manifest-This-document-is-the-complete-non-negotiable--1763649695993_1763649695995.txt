@@ -1,0 +1,325 @@
+Divine Naturals: Mandatory Full-Stack Build Manifest
+
+This document is the complete, non-negotiable instruction set for building the Divine Naturals platform. Adherence to the specified technology stack, file structure, and RBAC implementation is mandatory.
+
+🎯 Project Manifest
+
+Component
+
+Technology Stack
+
+Role
+
+Frontend (Client)
+
+React, TypeScript, Vite, Tailwind CSS, Shadcn/UI (mobile-first)
+
+Customer, Vendor, Delivery, Admin
+
+Backend (Server)
+
+Node.js, Express, TypeScript, Drizzle ORM, PostgreSQL
+
+API, Auth, Business Logic
+
+Database (Shared)
+
+PostgreSQL, Drizzle ORM Schema
+
+Persistent Storage
+
+📂 Phase 1: Mandatory Project Structure and Files
+
+The project must adhere to this file structure. All files must be created.
+
+Path
+
+Purpose
+
+Key Content Mandate
+
+shared/schema.ts
+
+Drizzle ORM Schema
+
+Define all PostgreSQL tables (see Data Models).
+
+shared/types.ts
+
+TypeScript Interfaces
+
+Define interfaces for all data structures (e.g., User, Order).
+
+server/index.ts
+
+Main Server File
+
+Express init, DB connection, Global Middleware, Route Registration.
+
+server/routes/*
+
+API Endpoints
+
+Separate files for logic (e.g., routes/customer.ts, routes/admin.ts).
+
+server/storage/*
+
+DB Operations
+
+Drizzle queries/functions (e.g., storage/order.ts).
+
+client/src/App.tsx
+
+Main Frontend App
+
+Role-Based Routing (switch/case), Global State, Core Components.
+
+client/src/pages/*
+
+Role-Specific Pages
+
+Dedicated components for each user role dashboard/view.
+
+client/src/components/*
+
+Reusable UI
+
+Generic components (e.g., Card, Badge, SubscriptionForm).
+
+💾 Phase 2: Data Models and Seeding (shared/)
+
+1. Mandatory Core Data Models
+
+File: shared/schema.ts
+
+Table Name
+
+Primary Fields
+
+Key Requirements
+
+users
+
+id, email, passwordHash, name, role
+
+role must be enum: 'customer', 'vendor', 'delivery', 'admin'. Links to role-specific tables via Drizzle relations.
+
+customers
+
+userId, walletBalance
+
+Links to users.id.
+
+vendors
+
+userId, businessName, isApproved
+
+Links to users.id. isApproved is boolean (default false).
+
+delivery_partners
+
+userId, vehicleType, currentStatus
+
+Links to users.id.
+
+products
+
+id, vendorId, name, price, inStock
+
+vendorId links to vendors.id.
+
+orders
+
+id, customerId, deliveryPartnerId, status
+
+status enum: 'pending', 'processing', 'out_for_delivery', 'delivered', 'cancelled'.
+
+milk_subscriptions
+
+customerId, productId, frequency, quantity
+
+frequency enum: 'daily', 'weekly'.
+
+addresses
+
+userId, street, city, postalCode
+
+Customer delivery locations.
+
+cart_items
+
+customerId, productId, quantity
+
+Shopping cart contents.
+
+complaints
+
+id, customerId, description, status
+
+Customer support tickets.
+
+2. Mock Data Seeding (Mandatory)
+
+Logic: The database connection logic in server/index.ts or a separate seed file must insert mock data on first run for immediate testing.
+
+Users: At least two users for each of the four roles (8 total).
+
+Products: At least 5 products, linked to the mock Vendor accounts.
+
+Subscriptions: 3-5 sample active subscriptions.
+
+🔐 Phase 3: Backend API Implementation (server/)
+
+File: server/index.ts (for middleware) and server/routes/*
+
+1. Mandatory RBAC Middleware
+
+Auth Middleware: Parses the authentication token (simulate Replit Auth) and populates req.user = { id, role }.
+
+checkRole(allowedRoles): A function that ensures req.user.role is one of the allowedRoles. If not, return 403 Forbidden.
+
+2. Required API Endpoints
+
+Every endpoint listed below must be implemented and protected by the specified role check.
+
+Endpoint
+
+Method
+
+Role(s)
+
+Functionality
+
+/api/auth/user
+
+GET
+
+ALL
+
+Returns the authenticated { id, role }.
+
+/api/products
+
+GET
+
+ALL
+
+Retrieves the full products catalog.
+
+/api/cart
+
+POST
+
+Customer
+
+Adds an item to the cart_items table.
+
+/api/orders
+
+POST
+
+Customer
+
+Finalizes cart, creates orders entry, clears cart.
+
+/api/milk-subscription
+
+POST
+
+Customer
+
+Creates a recurring delivery in milk_subscriptions.
+
+/api/vendors/dashboard
+
+GET
+
+Vendor
+
+Calculates and returns dailyRequirement, weeklyRevenue, and fulfillmentRate metrics.
+
+/api/vendors/inward
+
+POST
+
+Vendor
+
+Logs milk/product received, updating inventory counts.
+
+/api/delivery/assignments
+
+GET
+
+Delivery
+
+Retrieves orders assigned to the current deliveryPartnerId.
+
+/api/delivery/update-status
+
+POST
+
+Delivery
+
+Accepts orderId and new status, updates the orders table.
+
+/api/admin/vendors
+
+GET
+
+Admin
+
+Retrieves a list of all vendors and their isApproved status.
+
+/api/admin/approve-vendor/:id
+
+POST
+
+Admin
+
+Sets isApproved to true for the specified vendor.
+
+📱 Phase 4: Frontend Implementation (client/)
+
+Technology: React, TypeScript, Tailwind CSS, Mobile-First.
+
+1. Main App and Routing
+
+File: client/src/App.tsx
+
+Initial Load: Call GET /api/auth/user to determine userRole.
+
+Routing Logic: Use a switch statement based on userRole to conditionally render the appropriate main dashboard component (e.g., <CustomerDashboard />, <VendorPortal />).
+
+2. Mandatory Dashboard Components
+
+Implement the following dedicated components in the client/src/pages/ directory.
+
+Role
+
+Required Components & Logic
+
+Key Interaction Points
+
+Customer
+
+CustomerDashboard, Shop, Subscriptions, Cart
+
+Displays Wallet/Subscription summaries. Shop fetches /api/products. Subscription form posts to /api/milk-subscription.
+
+Vendor
+
+VendorDashboard, InwardMgmt, DriverMgmt
+
+Dashboard fetches metrics from /api/vendors/dashboard. InwardMgmt has a form to post to /api/vendors/inward.
+
+Delivery Partner
+
+DeliveryDashboard, EarningsTracker
+
+Dashboard lists orders from /api/delivery/assignments. Each order card has a "Mark Delivered" button that calls /api/delivery/update-status.
+
+Administrator
+
+AdminDashboard, VendorMgmt, Complaints
+
+Dashboard shows total counts (Customers, Pending Vendors). VendorMgmt displays a list of vendors with an "Approve" button calling /api/admin/approve-vendor/:id.

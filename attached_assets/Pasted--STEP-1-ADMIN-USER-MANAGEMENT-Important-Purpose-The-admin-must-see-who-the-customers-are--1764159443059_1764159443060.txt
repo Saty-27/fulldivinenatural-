@@ -1,0 +1,158 @@
+✅ STEP 1 — ADMIN USER MANAGEMENT (Important)
+
+Purpose: The admin must see who the customers are.
+
+📌 What to build:
+
+Admin Page: /admin/customers
+
+Admin can see:
+
+Customer Name
+
+Phone Number
+
+Email
+
+Number of Orders
+
+Number of Subscriptions
+
+Total Spending
+
+Joined Date
+
+📌 Backend APIs required:
+GET /api/admin/customers
+GET /api/admin/customers/:id/orders
+GET /api/admin/customers/:id/subscriptions
+
+📌 UI Elements:
+
+Table with all customers
+
+Search by name/phone
+
+Filter: “Has Subscription / No Subscription”
+
+Click → Open customer profile popup
+Shows:
+
+Basic details
+
+Order history
+
+Subscriptions
+
+Addresses
+
+⭐ This step is easy, fast, and makes your admin panel REAL.
+
+✅ STEP 2 — ADVANCED ORDER MANAGEMENT
+
+Your admin already shows orders, BUT you now need real backend controls like:
+
+📌 What to add:
+
+Change status
+PLACED → PREPARING → OUT FOR DELIVERY → DELIVERED
+
+Payment status
+PAID / UNPAID / FAILED
+
+Assign delivery partner (optional later)
+
+Estimated delivery time
+
+Print invoice PDF
+
+Cancel order
+
+📌 Backend APIs required:
+PUT /api/admin/orders/:id/status
+PUT /api/admin/orders/:id/payment
+PUT /api/admin/orders/:id/cancel
+PUT /api/admin/orders/:id/assign-partner   (later)
+GET /api/admin/orders/:id
+
+
+⭐ This makes admin powerful — like Amazon Seller Panel.
+
+🟧 STEP 3 — SUBSCRIPTION CONTROL (very important)
+
+You already show subscriptions — now make them controllable.
+
+📌 What to build:
+
+Admin can:
+
+Pause subscription
+
+Resume subscription
+
+Change quantity
+
+Change time slot
+
+See daily milk totals
+(e.g., Today: 1,250 liters required)
+
+📌 Backend APIs:
+PUT /api/admin/subscriptions/:id/pause
+PUT /api/admin/subscriptions/:id/resume
+PUT /api/admin/subscriptions/:id/update
+GET /api/admin/subscriptions/daily-requirement
+
+📌 UI:
+
+Subscription list
+
+Buttons: Pause, Resume
+
+Edit popup: Quantity, frequency, time slot
+
+Daily milk requirement banner at top
+
+⭐ This is the heart of the dairy business.
+
+🟧 STEP 4 — INVENTORY CONTROL (Stock System Upgrade)
+
+Currently stock reduces only during orders.
+Now we add full admin inventory controls.
+
+📌 What to build:
+
+Admin can:
+
+Increase stock manually
+
+Decrease stock (spoilage/wastage)
+
+Set low-stock alert levels
+
+Add product expiry date (optional)
+
+View stock logs (history)
+
+📌 Backend:
+POST /api/admin/products/:id/stock/add
+POST /api/admin/products/:id/stock/reduce
+GET /api/admin/products/:id/stock-history
+
+📌 UI:
+
+“Add Stock” button
+
+“Reduce Stock” button
+
+History table
+
+Color-coded levels
+
+<20 = red
+
+<50 = yellow
+
+50 = green
+
+⭐ This is real inventory system used by stores.

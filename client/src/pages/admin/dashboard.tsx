@@ -1,0 +1,3798 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+// Type definitions for admin stats
+interface AdminStats {
+  totalOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  totalRevenue: number;
+  totalCustomers: number;
+  totalProducts: number;
+  totalVendors: number;
+  totalDeliveryPartners: number;
+  lowStockProducts: number;
+}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  BarChart3, 
+  TrendingUp, 
+  Users, 
+  Package,
+  Truck, 
+  DollarSign,
+  AlertTriangle,
+  Bell,
+  Calendar,
+  Clock,
+  MapPin,
+  Milk,
+  Store,
+  CreditCard,
+  Search,
+  Filter,
+  Plus,
+  Edit,
+  Trash2,
+  Download,
+  Upload,
+  Settings,
+  UserCog,
+  MessageSquare,
+  Tag,
+  Phone,
+  Mail,
+  Shield,
+  Eye,
+  CheckCircle,
+  FileText,
+  User
+} from "lucide-react";
+import AdminLayout from "@/components/layout/admin-layout";
+import { useLocation } from "wouter";
+import { CalendarWidget } from "@/components/ui/calendar-widget";
+import { RevenueChart, OrdersChart, ProductDistributionChart, DeliveryPerformanceChart } from "@/components/charts/sales-charts";
+import { DataTable } from "@/components/ui/data-table";
+import { RecentActivityWidget } from "@/components/dashboard/recent-activity";
+import { RecentOrdersTable } from "@/components/dashboard/recent-orders-table";
+
+// Today's Requirements Panel Component
+function TodaysRequirementsPanel() {
+  interface Requirement {
+    productId: number;
+    productName: string;
+    totalLiters: number;
+    customers: Array<{ customerName: string; liters: number; deliveryTime: string }>;
+  }
+
+  const { data: requirements, isLoading } = useQuery({
+    queryKey: ["/api/billing/today-requirements"],
+    queryFn: async () => {
+      const res = await fetch("/api/billing/today-requirements", { credentials: "include" });
+      return res.ok ? res.json() : { totalLitersNeeded: 0, totalDeliveries: 0, requirements: [] };
+    },
+    retry: false,
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-8 text-gray-500">Loading today's requirements...</div>;
+  }
+
+  const { totalLitersNeeded = 0, totalDeliveries = 0, requirements: reqs = [] } = requirements || {};
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <div className="p-4 border rounded-lg bg-blue-50">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-blue-800">🥛 Total Milk Required Today</p>
+              <p className="text-sm text-blue-600">All active subscriptions</p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-black text-blue-700">{totalLitersNeeded}L</div>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 border rounded-lg bg-green-50">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-green-800">📦 Total Deliveries Today</p>
+              <p className="text-sm text-green-600">Customer subscriptions to fulfill</p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-black text-green-700">{totalDeliveries}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Requirements by Type */}
+      {reqs && reqs.length > 0 ? (
+        <div className="space-y-3">
+          <h3 className="text-lg font-bold text-[hsl(var(--eco-secondary))]">📋 Requirements by Product Type</h3>
+          {(reqs as Requirement[]).map((req) => (
+            <div key={req.productId} className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="font-bold text-gray-800">{req.productName}</p>
+                  <p className="text-sm text-gray-600">{req.customers.length} customers</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-xl font-black text-emerald-700">{req.totalLiters}L</div>
+                  <p className="text-xs text-gray-500">total qty</p>
+                </div>
+              </div>
+              
+              {/* Customer List */}
+              <div className="space-y-2 pl-2 border-l-2 border-emerald-300">
+                {req.customers.map((cust, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-sm">
+                    <div>
+                      <p className="font-semibold text-gray-700">{cust.customerName}</p>
+                      <p className="text-xs text-gray-500">🕐 {cust.deliveryTime}</p>
+                    </div>
+                    <Badge className="bg-emerald-100 text-emerald-800">{cust.liters}L</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          <Milk className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+          <p>No milk subscriptions scheduled for today</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  const [location] = useLocation();
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Get current date and time
+  const currentDate = new Date();
+  const formattedDate = currentDate.toLocaleDateString('en-IN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const formattedTime = currentDate.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  
+  const { data: stats = {} as AdminStats } = useQuery({
+    queryKey: ["/api/admin/stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/stats");
+      if (!response.ok) return {} as AdminStats;
+      return response.json() as Promise<AdminStats>;
+    },
+    retry: false,
+  });
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ["/api/admin/orders"],
+    retry: false,
+  });
+
+  const { data: vendors = [] } = useQuery({
+    queryKey: ["/api/admin/vendors"],
+    retry: false,
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
+    retry: false,
+  });
+
+  const { data: deliveryPartners = [] } = useQuery({
+    queryKey: ["/api/admin/delivery-partners"],
+    retry: false,
+  });
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ["/api/admin/customers"],
+    retry: false,
+  });
+
+  const { data: complaints = [] } = useQuery({
+    queryKey: ["/api/complaints"],
+    retry: false,
+  });
+
+  // Helper functions for button actions
+  const handleAction = (action: string, item?: any) => {
+    toast({
+      title: "Action Triggered",
+      description: `${action} ${item ? `for ${item.name || item.id || 'item'}` : 'executed successfully'}`,
+    });
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    toast({
+      title: "Search",
+      description: `Searching for: ${term}`,
+    });
+  };
+
+  // Get stats from API
+  const totalOrders = stats?.totalOrders || 0;
+  const pendingOrders = stats?.pendingOrders || 0;
+  const totalRevenue = stats?.totalRevenue || 0;
+  const activeVendors = stats?.totalVendors || 0;
+  const totalCustomers = stats?.totalCustomers || 0;
+  const totalProducts = stats?.totalProducts || 0;
+  const lowStockProducts = stats?.lowStockProducts || 0;
+
+  // Calculate weekly and monthly revenue from real orders
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  
+  const weeklyRevenue = Array.isArray(orders) 
+    ? orders.reduce((sum: number, order: any) => {
+        const orderDate = new Date(order.createdAt);
+        return orderDate >= sevenDaysAgo ? sum + (order.total || 0) : sum;
+      }, 0)
+    : 0;
+
+  const monthlyRevenue = Array.isArray(orders)
+    ? orders.reduce((sum: number, order: any) => {
+        const orderDate = new Date(order.createdAt);
+        return orderDate >= thirtyDaysAgo ? sum + (order.total || 0) : sum;
+      }, 0)
+    : 0;
+
+  // Calculate milk circulation from orders
+  const totalMilkUnits = Array.isArray(orders)
+    ? orders.reduce((sum: number, order: any) => {
+        return sum + (order.items?.reduce((qty: number, item: any) => qty + (item.quantity || 0), 0) || 0);
+      }, 0)
+    : 0;
+
+  // Calculate new customers this week
+  const newCustomersThisWeek = Array.isArray(customers)
+    ? customers.filter((customer: any) => {
+        const createdDate = new Date(customer.createdAt);
+        return createdDate >= sevenDaysAgo;
+      }).length
+    : 0;
+
+  // Get available capacity from vendors
+  const availableCapacity = Array.isArray(vendors) ? vendors.reduce((sum: number, vendor: any) => sum + (vendor.dailyCapacity || 0), 0) : 0;
+
+  // Render content based on current route
+  const renderContent = () => {
+    switch (location) {
+      case '/admin/vendors':
+        return <VendorPanelContent vendors={vendors} onAction={handleAction} />;
+      case '/admin/subvendors':
+        return <SubvendorsContent onAction={handleAction} />;
+      case '/admin/delivery':
+        return <DeliveryPartnersContent deliveryPartners={deliveryPartners} onAction={handleAction} />;
+      case '/admin/customers':
+        return <CustomersContent customers={customers} onAction={handleAction} onSearch={handleSearch} />;
+      case '/admin/circulation':
+        return <MilkCirculationContent onAction={handleAction} />;
+      case '/admin/finance':
+        return <RevenueFinanceContent orders={orders} onAction={handleAction} />;
+      case '/admin/requirements':
+        return <RequirementsForecastContent onAction={handleAction} />;
+      case '/admin/complaints':
+        return <ComplaintsSupportContent complaints={complaints} onAction={handleAction} />;
+      case '/admin/reports':
+        return <ReportsAnalyticsContent />;
+      case '/admin/inventory':
+        return <InventoryManagementContent onAction={handleAction} />;
+      case '/admin/invoices':
+        return <InvoicesPaymentsContent onAction={handleAction} />;
+      case '/admin/employees':
+        return <EmployeeManagementContent onAction={handleAction} />;
+      case '/admin/roles':
+        return <RolePermissionsContent onAction={handleAction} />;
+      case '/admin/settings':
+        return <SettingsConfigContent onAction={handleAction} />;
+      case '/admin/banking':
+        return <BankAccountsFinanceContent onAction={handleAction} />;
+      case '/admin/audit':
+        return <AuditLogsContent onAction={handleAction} />;
+      case '/admin/marketing':
+        return <MarketingCampaignsContent onAction={handleAction} />;
+      case '/admin/loyalty':
+        return <LoyaltyProgramsContent onAction={handleAction} />;
+      case '/admin/monitoring':
+        return <SystemHealthContent onAction={handleAction} />;
+      default:
+        return <DashboardOverviewContent 
+          totalOrders={totalOrders}
+          pendingOrders={pendingOrders}
+          totalRevenue={totalRevenue}
+          weeklyRevenue={weeklyRevenue}
+          monthlyRevenue={monthlyRevenue}
+          totalMilkUnits={totalMilkUnits}
+          newCustomersThisWeek={newCustomersThisWeek}
+          vendors={vendors}
+          deliveryPartners={deliveryPartners}
+          customers={customers}
+          orders={orders}
+          products={products}
+        />;
+    }
+  };
+
+  return (
+    <AdminLayout>
+      {location === '/admin' || location === '/admin/dashboard' ? (
+        <>
+          {/* Welcome Header */}
+          <div className="welcome-header p-3 sm:p-4 lg:p-6 mb-4 lg:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <h1 className="dairy-title text-xl sm:text-2xl mb-2 truncate">
+                  Welcome Back, Admin 👋
+                </h1>
+                <div className="dairy-muted flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{formattedDate}</span>
+                  </div>
+                  <div className="flex items-center gap-2 sm:ml-4">
+                    <Clock className="w-4 h-4 flex-shrink-0" />
+                    <span>{formattedTime}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="notification-badge relative">
+                  <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                    3
+                  </span>
+                </div>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+          {renderContent()}
+        </>
+      ) : (
+        renderContent()
+      )}
+    </AdminLayout>
+  );
+}
+
+// Enhanced Dashboard Overview Content with Comprehensive Analytics
+function DashboardOverviewContent({ totalOrders, pendingOrders, totalRevenue, weeklyRevenue, monthlyRevenue, totalMilkUnits, newCustomersThisWeek, vendors, deliveryPartners, customers, orders, products }: any) {
+  const [showTodayCustomers, setShowTodayCustomers] = useState(false);
+  
+  const totalVendors = Array.isArray(vendors) ? vendors.length : 0;
+  const totalDeliveryPartners = Array.isArray(deliveryPartners) ? deliveryPartners.length : 0;
+  const totalCustomers = Array.isArray(customers) ? customers.length : 0;
+  const activeDeliveryPartners = Array.isArray(deliveryPartners) ? deliveryPartners.filter((p: any) => p.isActive).length : 0;
+  
+  // Product stats
+  const totalProducts = Array.isArray(products) ? products.length : 0;
+  const activeProducts = Array.isArray(products) ? products.filter((p: any) => p.isActive).length : 0;
+  const inactiveProducts = totalProducts - activeProducts;
+  
+  // Fetch today's requirements
+  const { data: todayReqs } = useQuery({
+    queryKey: ["/api/billing/today-requirements"],
+    queryFn: async () => {
+      const res = await fetch("/api/billing/today-requirements", { credentials: "include" });
+      return res.ok ? res.json() : { totalLitersNeeded: 0, totalDeliveries: 0, requirements: [] };
+    },
+    retry: false,
+  });
+  
+  // Fetch categories for dashboard stats
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+    retry: false,
+  });
+  
+  const totalCategories = Array.isArray(categories) ? categories.length : 0;
+  const activeCategories = Array.isArray(categories) ? categories.filter((c: any) => c.isActive).length : 0;
+  const inactiveCategories = totalCategories - activeCategories;
+  
+  return (
+    <>
+      {/* Today's Milk Requirements Card - TOP PRIORITY */}
+      <Card className="eco-card mb-6 lg:mb-8 cursor-pointer hover:shadow-lg transition-shadow border-2 border-emerald-300" onClick={() => setShowTodayCustomers(!showTodayCustomers)}>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center justify-between text-lg sm:text-xl font-black">
+            <span className="flex items-center">
+              <Milk className="w-5 h-5 sm:w-6 sm:h-6 mr-3 eco-icon-primary" />
+              🥛 Today's Milk Requirements
+            </span>
+            <span className={`text-sm transition-transform ${showTodayCustomers ? 'rotate-180' : ''}`}>▼</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="p-4 border rounded-lg bg-blue-50">
+              <p className="text-sm text-blue-600">Total Liters Today</p>
+              <p className="text-2xl font-black text-blue-700">{todayReqs?.totalLitersNeeded || 0}L</p>
+            </div>
+            <div className="p-4 border rounded-lg bg-green-50">
+              <p className="text-sm text-green-600">Total Deliveries</p>
+              <p className="text-2xl font-black text-green-700">{todayReqs?.totalDeliveries || 0}</p>
+            </div>
+          </div>
+
+          {showTodayCustomers && (
+            <div className="space-y-4 mt-4 pt-4 border-t max-h-96 overflow-y-auto">
+              <h4 className="font-bold text-gray-800">📍 Delivery by Area:</h4>
+              {todayReqs?.requirements && todayReqs.requirements.length > 0 ? (
+                todayReqs.requirements.map((req: any) => (
+                  <div key={req.productId} className="space-y-3">
+                    <p className="font-bold text-emerald-700 text-lg">{req.productName} ({req.totalLiters}L Total)</p>
+                    {req.byArea && Object.entries(req.byArea).length > 0 ? (
+                      Object.entries(req.byArea).map(([area, customers]: [string, any]) => (
+                        <div key={area} className="border-l-4 border-emerald-400 pl-3 bg-emerald-50 p-3 rounded">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-bold text-emerald-800">📦 {area}</p>
+                            <Badge className="bg-emerald-200 text-emerald-900">{customers.length} deliveries</Badge>
+                          </div>
+                          <div className="space-y-2">
+                            {customers.map((cust: any, idx: number) => (
+                              <div key={idx} className="text-xs bg-white p-2 rounded border border-emerald-200">
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="font-semibold text-gray-800">{cust.customerName}</span>
+                                  <Badge className="bg-blue-100 text-blue-800 text-xs">{cust.liters}L @ {cust.deliveryTime}</Badge>
+                                </div>
+                                <p className="text-gray-600 text-xs">📍 {cust.address}</p>
+                                {cust.landmark && <p className="text-gray-500 text-xs">🏷️ {cust.landmark}</p>}
+                                <p className="text-gray-500 text-xs">{cust.city}, {cust.state} {cust.pincode}</p>
+                                {cust.phone && <p className="text-gray-500 text-xs">📱 {cust.phone}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-xs">No delivery areas for this product</p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No milk subscriptions scheduled for today</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Enhanced KPI Overview - Row 1 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 lg:mb-6" style={{animationDelay: '0.2s'}}>
+        <StatsCard
+          title="Total Vendors"
+          value={totalVendors.toString()}
+          icon={<Store className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend="Across all zones"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="Total Orders"
+          value={totalOrders.toString()}
+          icon={<Package className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend={`${pendingOrders} pending`}
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Delivery Partners"
+          value={totalDeliveryPartners.toString()}
+          icon={<Truck className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend={`${activeDeliveryPartners} active today`}
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+        <StatsCard
+          title="Total Customers"
+          value={totalCustomers.toString()}
+          icon={<Users className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend={`+${newCustomersThisWeek} this week`}
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+      </div>
+
+      {/* Enhanced KPI Overview - Row 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 lg:mb-6" style={{animationDelay: '0.4s'}}>
+        <StatsCard
+          title="Total Milk Units"
+          value={`${(totalMilkUnits || 0).toLocaleString()}`}
+          icon={<Milk className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend="Total distributed"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="Total Revenue"
+          value={`₹${(totalRevenue || 0).toLocaleString()}`}
+          icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend="All time"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Weekly Revenue"
+          value={`₹${(weeklyRevenue || 0).toLocaleString()}`}
+          icon={<BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend="Last 7 days"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+        <StatsCard
+          title="Monthly Revenue"
+          value={`₹${(monthlyRevenue || 0).toLocaleString()}`}
+          icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend="Last 30 days"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+      </div>
+
+      {/* Product & Category Status Overview - Row 3 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 lg:mb-6" style={{animationDelay: '0.6s'}}>
+        <StatsCard
+          title="Total Products"
+          value={totalProducts.toString()}
+          icon={<Package className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend={`${activeProducts} active, ${inactiveProducts} inactive`}
+          color="text-emerald-600"
+          bgColor="bg-emerald-50"
+        />
+        <StatsCard
+          title="Active Products"
+          value={activeProducts.toString()}
+          icon={<CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend="Ready to sell"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Total Categories"
+          value={totalCategories.toString()}
+          icon={<Tag className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend={`${activeCategories} active, ${inactiveCategories} inactive`}
+          color="text-indigo-600"
+          bgColor="bg-indigo-50"
+        />
+        <StatsCard
+          title="Active Categories"
+          value={activeCategories.toString()}
+          icon={<CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />}
+          trend="In use for products"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+      </div>
+
+      {/* Revenue Graph */}
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-8">
+        <RevenueChart orders={orders} />
+        <OrdersChart orders={orders} />
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-8">
+        <ProductDistributionChart products={products} />
+        <DeliveryPerformanceChart orders={orders} />
+      </div>
+
+      {/* Quick Actions */}
+      <Card className="eco-card mb-6 lg:mb-8">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="dairy-title text-lg sm:text-xl">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <Button className="eco-button h-auto p-4 sm:p-6 flex flex-col items-center space-y-2 sm:space-y-3 group">
+              <Bell className="w-6 h-6 sm:w-8 sm:h-8 group-hover:animate-bounce" />
+              <div className="text-center">
+                <span className="dairy-body block mb-1 text-sm sm:text-base">Alert All Vendors</span>
+                <span className="text-xs opacity-90">Send capacity alerts</span>
+              </div>
+            </Button>
+            <Button className="eco-button-secondary h-auto p-4 sm:p-6 flex flex-col items-center space-y-2 sm:space-y-3 group">
+              <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 group-hover:scale-110 transition-transform" />
+              <div className="text-center">
+                <span className="dairy-body block mb-1 text-sm sm:text-base">Send Bill Reminders</span>
+                <span className="text-xs opacity-75">12 pending payments</span>
+              </div>
+            </Button>
+            <Button className="eco-button-secondary h-auto p-4 sm:p-6 flex flex-col items-center space-y-2 sm:space-y-3 group sm:col-span-2 lg:col-span-1">
+              <Truck className="w-6 h-6 sm:w-8 sm:h-8 group-hover:translate-x-1 transition-transform" />
+              <div className="text-center">
+                <span className="dairy-body block mb-1 text-sm sm:text-base">Assign Deliveries</span>
+                <span className="text-xs opacity-75">Auto-distribute orders</span>
+              </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Calendar and Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
+        <div className="lg:col-span-2 min-w-0">
+          <CalendarWidget />
+        </div>
+        <div className="min-w-0">
+          <RecentActivityWidget orders={orders} />
+        </div>
+      </div>
+
+      {/* Recent Orders Table */}
+      <RecentOrdersTable orders={orders} />
+    </>
+  );
+}
+
+// Milk Management Content
+function MilkManagementContent() {
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Date-wise Milk Requirements</h2>
+          <Button className="eco-button">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Requirement
+          </Button>
+        </div>
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Tomorrow's Distribution Plan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time Slot</TableHead>
+                <TableHead>Zone</TableHead>
+                <TableHead>Required (L)</TableHead>
+                <TableHead>Assigned Vendor</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>6:00 AM</TableCell>
+                <TableCell>Koramangala</TableCell>
+                <TableCell>500L</TableCell>
+                <TableCell>Fresh Dairy Co</TableCell>
+                <TableCell><Badge className="bg-green-100 text-green-700">Confirmed</Badge></TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>6:00 AM</TableCell>
+                <TableCell>BTM Layout</TableCell>
+                <TableCell>750L</TableCell>
+                <TableCell>Green Valley Dairy</TableCell>
+                <TableCell><Badge className="bg-yellow-100 text-yellow-700">Pending</Badge></TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>6:00 PM</TableCell>
+                <TableCell>HSR Layout</TableCell>
+                <TableCell>400L</TableCell>
+                <TableCell>Pure Milk Farm</TableCell>
+                <TableCell><Badge className="bg-green-100 text-green-700">Confirmed</Badge></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Auto-Distribution Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Button className="w-full eco-button">Auto-Assign Based on Capacity</Button>
+              <Button className="w-full eco-button-secondary">Zone-wise Distribution</Button>
+              <Button className="w-full eco-button-secondary">Vendor Preference Mapping</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Bottle Return Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span>Total Bottles Out</span>
+                <span className="font-semibold">1,250</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Returned Today</span>
+                <span className="font-semibold text-green-600">1,180</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Pending Return</span>
+                <span className="font-semibold text-orange-600">70</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+}
+
+// Enhanced Vendor Management Content with Hierarchy System
+function VendorPanelContent({ vendors }: any) {
+  const [activeTab, setActiveTab] = useState("hierarchy");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">🏢 Vendor Hierarchy Management</h2>
+            <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Manage Head Vendors, Vendors & Sub-Vendors</p>
+          </div>
+          <div className="flex gap-2">
+            <Button className="eco-button">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Head Vendor
+            </Button>
+            <Button className="eco-button-secondary">
+              <Download className="w-4 h-4 mr-2" />
+              Export Data
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Overview Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatsCard
+          title="Head Vendors (Zone Heads)"
+          value="3"
+          icon={<Shield className="w-6 h-6" />}
+          trend="Santacruz, Andheri, Borivali"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+        <StatsCard
+          title="Main Vendors"
+          value="12"
+          icon={<Store className="w-6 h-6" />}
+          trend="4 per zone average"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="Sub-Vendors"
+          value="48"
+          icon={<Users className="w-6 h-6" />}
+          trend="Total branch vendors"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Total Daily Capacity"
+          value="25,000L"
+          icon={<Milk className="w-6 h-6" />}
+          trend="Across all vendors"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+      </div>
+
+      {/* Management Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5 eco-tabs">
+          <TabsTrigger value="hierarchy" className="eco-tab font-bold">🏢 Hierarchy</TabsTrigger>
+          <TabsTrigger value="requirements" className="eco-tab font-bold">📋 Requirements</TabsTrigger>
+          <TabsTrigger value="finance" className="eco-tab font-bold">💰 Finance</TabsTrigger>
+          <TabsTrigger value="performance" className="eco-tab font-bold">📊 Performance</TabsTrigger>
+          <TabsTrigger value="approvals" className="eco-tab font-bold">✅ Approvals</TabsTrigger>
+        </TabsList>
+
+        {/* Hierarchy Management Tab */}
+        <TabsContent value="hierarchy" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <Store className="w-6 h-6 mr-3 eco-icon-primary" />
+                🏢 Vendor Hierarchy Structure
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Santacruz Zone */}
+                <div className="p-6 border-2 border-purple-200 rounded-xl bg-gradient-to-r from-purple-50 to-blue-50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <Shield className="w-8 h-8 text-purple-600 mr-3" />
+                      <div>
+                        <h3 className="text-xl font-black text-purple-800">Santacruz Head Vendor</h3>
+                        <p className="text-purple-600 font-semibold">Zone Manager - Rajesh Patel</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-black text-purple-700">4 Vendors</div>
+                      <div className="text-purple-600 font-semibold">16 Sub-Vendors</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-white rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-blue-800">📍 Santacruz Sub-Vendor 1</h4>
+                        <Badge className="bg-green-500 text-white">Active</Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Daily Requirement:</span>
+                          <span className="font-semibold">500L</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sub-Vendors:</span>
+                          <span className="font-semibold">4 branches</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Monthly Revenue:</span>
+                          <span className="font-semibold text-green-600">₹45,000</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-white rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-blue-800">📍 Santacruz Sub-Vendor 2</h4>
+                        <Badge className="bg-green-500 text-white">Active</Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Daily Requirement:</span>
+                          <span className="font-semibold">750L</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sub-Vendors:</span>
+                          <span className="font-semibold">6 branches</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Monthly Revenue:</span>
+                          <span className="font-semibold text-green-600">₹67,500</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Andheri Zone */}
+                <div className="p-6 border-2 border-green-200 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <Shield className="w-8 h-8 text-green-600 mr-3" />
+                      <div>
+                        <h3 className="text-xl font-black text-green-800">Andheri Head Vendor</h3>
+                        <p className="text-green-600 font-semibold">Zone Manager - Priya Sharma</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-black text-green-700">4 Vendors</div>
+                      <div className="text-green-600 font-semibold">16 Sub-Vendors</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-white rounded-lg border border-emerald-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-emerald-800">📍 Andheri Sub-Vendor 1</h4>
+                        <Badge className="bg-green-500 text-white">Active</Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Daily Requirement:</span>
+                          <span className="font-semibold">600L</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sub-Vendors:</span>
+                          <span className="font-semibold">4 branches</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Monthly Revenue:</span>
+                          <span className="font-semibold text-green-600">₹54,000</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-white rounded-lg border border-emerald-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-emerald-800">📍 Andheri Sub-Vendor 2</h4>
+                        <Badge className="bg-yellow-500 text-white">Pending</Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Daily Requirement:</span>
+                          <span className="font-semibold">450L</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sub-Vendors:</span>
+                          <span className="font-semibold">3 branches</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Monthly Revenue:</span>
+                          <span className="font-semibold text-orange-600">₹40,500</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Requirements Management Tab */}
+        <TabsContent value="requirements" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <Calendar className="w-6 h-6 mr-3 eco-icon-primary" />
+                📋 Today's Milk Subscription Requirements
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TodaysRequirementsPanel />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Finance Tab */}
+        <TabsContent value="finance" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <DollarSign className="w-6 h-6 mr-3 eco-icon-primary" />
+                💰 Financial Analytics & Revenue
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid lg:grid-cols-3 gap-6 mb-6">
+                <StatsCard
+                  title="Today's Revenue"
+                  value="₹1,25,750"
+                  icon={<DollarSign className="w-6 h-6" />}
+                  trend="+12% vs yesterday"
+                  color="text-green-600"
+                  bgColor="bg-green-50"
+                />
+                <StatsCard
+                  title="Monthly Revenue"
+                  value="₹34,50,000"
+                  icon={<BarChart3 className="w-6 h-6" />}
+                  trend="+18% vs last month"
+                  color="text-blue-600"
+                  bgColor="bg-blue-50"
+                />
+                <StatsCard
+                  title="Pending Payments"
+                  value="₹2,45,000"
+                  icon={<AlertTriangle className="w-6 h-6" />}
+                  trend="12 vendors pending"
+                  color="text-orange-600"
+                  bgColor="bg-orange-50"
+                />
+              </div>
+              
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Zone/Vendor</TableHead>
+                    <TableHead>Daily Earnings</TableHead>
+                    <TableHead>Weekly Earnings</TableHead>
+                    <TableHead>Monthly Earnings</TableHead>
+                    <TableHead>Payment Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium">Santacruz Head Vendor</TableCell>
+                    <TableCell className="text-green-600 font-semibold">₹45,000</TableCell>
+                    <TableCell className="text-green-600 font-semibold">₹3,15,000</TableCell>
+                    <TableCell className="text-green-600 font-semibold">₹13,50,000</TableCell>
+                    <TableCell><Badge className="bg-green-100 text-green-700">Paid</Badge></TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline"><Eye className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline"><Download className="w-4 h-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Andheri Head Vendor</TableCell>
+                    <TableCell className="text-green-600 font-semibold">₹42,000</TableCell>
+                    <TableCell className="text-green-600 font-semibold">₹2,94,000</TableCell>
+                    <TableCell className="text-green-600 font-semibold">₹12,60,000</TableCell>
+                    <TableCell><Badge className="bg-orange-100 text-orange-700">Pending</Badge></TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline"><Eye className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline"><Mail className="w-4 h-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <BarChart3 className="w-6 h-6 mr-3 eco-icon-primary" />
+                📊 Performance Analytics & Comparison
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-lg font-semibold text-gray-500 mb-4">
+                  Vendor Performance Dashboard
+                </p>
+                <p className="text-[hsl(var(--eco-text-muted))] font-semibold mb-6">
+                  Compare zone performance, delivery efficiency, and quality metrics
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button className="eco-button">
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Generate Performance Report
+                  </Button>
+                  <Button className="eco-button-secondary">
+                    <Download className="w-5 h-5 mr-2" />
+                    Export Analytics
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Approvals Tab */}
+        <TabsContent value="approvals" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <CheckCircle className="w-6 h-6 mr-3 eco-icon-primary" />
+                ✅ Vendor Approvals & Submissions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-orange-800">Santacruz Sub-Vendor 3 - Daily Report</p>
+                      <p className="text-sm text-orange-600">Submitted: Today 2:30 PM</p>
+                      <p className="text-sm text-gray-600">Required: 400L | Delivered: 380L | Revenue: ₹34,200</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button size="sm" className="bg-green-500 text-white">✅ Approve</Button>
+                      <Button size="sm" variant="outline">❌ Reject</Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-orange-800">Andheri Sub-Vendor 1 - Next Day Requirement</p>
+                      <p className="text-sm text-orange-600">Submitted: Today 4:15 PM</p>
+                      <p className="text-sm text-gray-600">Tomorrow's Requirement: 650L | Reason: Festival demand</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button size="sm" className="bg-green-500 text-white">✅ Approve</Button>
+                      <Button size="sm" variant="outline">❌ Reject</Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-blue-800">Borivali Head Vendor - New Sub-Vendor Application</p>
+                      <p className="text-sm text-blue-600">Submitted: Yesterday 11:00 AM</p>
+                      <p className="text-sm text-gray-600">Business: Shree Krishna Dairy | Capacity: 300L/day</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button size="sm" className="bg-green-500 text-white">✅ Approve</Button>
+                      <Button size="sm" variant="outline">❌ Reject</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </>
+  );
+}
+
+// User Management Content
+function UserManagementContent({ customers, onAction, onSearch }: any) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const totalCustomers = Array.isArray(customers) ? customers.length : 0;
+  const activeCustomers = Array.isArray(customers) ? customers.filter((c: any) => c.status === 'active').length : 0;
+  const totalLifetimeValue = Array.isArray(customers) ? customers.reduce((sum: number, c: any) => sum + (c.lifetimeValue || 0), 0) : 0;
+
+  const handleSearchSubmit = () => {
+    if (searchTerm.trim()) {
+      onSearch(searchTerm);
+    }
+  };
+
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Customer Management</h2>
+          <div className="flex space-x-2">
+            <Input 
+              placeholder="Search customers..." 
+              className="w-64" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
+            />
+            <Button variant="outline" onClick={handleSearchSubmit}>
+              <Search className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <StatsCard
+          title="Total Customers"
+          value={totalCustomers.toString()}
+          icon={<Users className="w-6 h-6" />}
+          trend="+8 this week"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="Active Subscriptions"
+          value={activeCustomers.toString()}
+          icon={<Milk className="w-6 h-6" />}
+          trend={`${Math.round((activeCustomers/totalCustomers)*100)}% of customers`}
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Lifetime Value"
+          value={`₹${totalLifetimeValue.toLocaleString()}`}
+          icon={<DollarSign className="w-6 h-6" />}
+          trend="Total revenue"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+        <StatsCard
+          title="Avg Order Value"
+          value={`₹${Math.round(totalLifetimeValue / totalCustomers)}`}
+          icon={<MessageSquare className="w-6 h-6" />}
+          trend="Per customer"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Customer Database</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Customer Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Subscription</TableHead>
+                <TableHead>Last Order</TableHead>
+                <TableHead>Lifetime Value</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.isArray(customers) && customers.map((customer: any, index: number) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{customer.firstName} {customer.lastName}</TableCell>
+                  <TableCell>{customer.email}</TableCell>
+                  <TableCell>{customer.phone}</TableCell>
+                  <TableCell className="text-sm">{customer.subscriptionType}</TableCell>
+                  <TableCell>{customer.lastOrder}</TableCell>
+                  <TableCell className="font-semibold">₹{customer.lifetimeValue?.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <Badge className={customer.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
+                      {customer.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button size="sm" variant="outline"><Edit className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="outline"><Phone className="w-4 h-4" /></Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+// Enhanced Delivery Partner Management with KYC Verification
+function DeliveryPartnersContent({ deliveryPartners, onAction }: any) {
+  const [activeTab, setActiveTab] = useState("partners");
+  const totalPartners = Array.isArray(deliveryPartners) ? deliveryPartners.length : 0;
+  const activePartners = Array.isArray(deliveryPartners) ? deliveryPartners.filter((p: any) => p.isActive).length : 0;
+  const totalEarnings = Array.isArray(deliveryPartners) ? deliveryPartners.reduce((sum: number, p: any) => sum + (p.earnings?.thisMonth || 0), 0) : 0;
+  const kycPendingCount = 5; // Mock data for KYC pending
+
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">🚚 Delivery Partner Management</h2>
+            <p className="text-[hsl(var(--eco-text-muted))] font-semibold">KYC Verification, Assignment & Performance Tracking</p>
+          </div>
+          <div className="flex gap-2">
+            <Button className="eco-button" onClick={() => onAction("Add New Partner")}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Partner
+            </Button>
+            <Button className="eco-button-secondary" onClick={() => onAction("Route Optimization")}>
+              <MapPin className="w-4 h-4 mr-2" />
+              Route Optimization
+            </Button>
+            <Button className="eco-button-secondary">
+              <Download className="w-4 h-4 mr-2" />
+              Export Data
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <StatsCard
+          title="Total Partners"
+          value={totalPartners.toString()}
+          icon={<Truck className="w-6 h-6" />}
+          trend="Across all zones"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="KYC Verified"
+          value={(totalPartners - kycPendingCount).toString()}
+          icon={<CheckCircle className="w-6 h-6" />}
+          trend={`${Math.round(((totalPartners - kycPendingCount)/totalPartners)*100)}% verified`}
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="KYC Pending"
+          value={kycPendingCount.toString()}
+          icon={<AlertTriangle className="w-6 h-6" />}
+          trend="Needs verification"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+        <StatsCard
+          title="Active Today"
+          value={activePartners.toString()}
+          icon={<Users className="w-6 h-6" />}
+          trend="Currently delivering"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+        <StatsCard
+          title="Avg Rating"
+          value="4.7★"
+          icon={<TrendingUp className="w-6 h-6" />}
+          trend="Customer feedback"
+          color="text-yellow-600"
+          bgColor="bg-yellow-50"
+        />
+      </div>
+
+      {/* Management Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4 eco-tabs">
+          <TabsTrigger value="partners" className="eco-tab font-bold">👥 Partners</TabsTrigger>
+          <TabsTrigger value="kyc" className="eco-tab font-bold">📄 KYC Verification</TabsTrigger>
+          <TabsTrigger value="assignments" className="eco-tab font-bold">📍 Assignments</TabsTrigger>
+          <TabsTrigger value="performance" className="eco-tab font-bold">📊 Performance</TabsTrigger>
+        </TabsList>
+
+        {/* Partners Overview Tab */}
+        <TabsContent value="partners" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <Users className="w-6 h-6 mr-3 eco-icon-primary" />
+                👥 Active Delivery Partners
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Partner Details</TableHead>
+                    <TableHead>Contact & Vehicle</TableHead>
+                    <TableHead>Zone Assignment</TableHead>
+                    <TableHead>KYC Status</TableHead>
+                    <TableHead>Performance</TableHead>
+                    <TableHead>Monthly Earnings</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-[hsl(var(--eco-secondary))]">Ramesh Kumar</p>
+                          <p className="text-sm text-gray-600">Age: 32</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center text-sm">
+                          <Phone className="w-4 h-4 mr-2 text-green-500" />
+                          +91 9876543210
+                        </div>
+                        <div className="text-sm text-gray-600">🏍️ Bike - MH02AB1234</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="font-semibold text-blue-700">Santacruz Zone</div>
+                        <div className="text-xs text-gray-600">Assigned to: Santacruz Sub-Vendor 1</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Badge className="bg-green-500 text-white">✅ Verified</Badge>
+                        <div className="text-xs text-green-600">Aadhaar + PAN</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="text-sm font-semibold">4.8★ (127 reviews)</div>
+                        <div className="text-xs text-green-600">96% on-time</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-green-600">₹18,500</TableCell>
+                    <TableCell><Badge className="bg-green-100 text-green-700">Active</Badge></TableCell>
+                    <TableCell>
+                      <div className="flex space-x-1">
+                        <Button size="sm" variant="outline"><Edit className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline"><MapPin className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline"><Phone className="w-4 h-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  
+                  <TableRow>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-[hsl(var(--eco-secondary))]">Priya Sharma</p>
+                          <p className="text-sm text-gray-600">Age: 28</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center text-sm">
+                          <Phone className="w-4 h-4 mr-2 text-green-500" />
+                          +91 8765432109
+                        </div>
+                        <div className="text-sm text-gray-600">🚛 Tempo - MH04CD5678</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="font-semibold text-green-700">Andheri Zone</div>
+                        <div className="text-xs text-gray-600">Assigned to: Andheri Sub-Vendor 2</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Badge className="bg-orange-500 text-white">⏳ Pending</Badge>
+                        <div className="text-xs text-orange-600">Aadhaar only</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="text-sm font-semibold">4.6★ (89 reviews)</div>
+                        <div className="text-xs text-yellow-600">92% on-time</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-green-600">₹22,000</TableCell>
+                    <TableCell><Badge className="bg-yellow-100 text-yellow-700">Pending KYC</Badge></TableCell>
+                    <TableCell>
+                      <div className="flex space-x-1">
+                        <Button size="sm" variant="outline"><Edit className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline"><FileText className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline"><Phone className="w-4 h-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* KYC Verification Tab */}
+        <TabsContent value="kyc" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <FileText className="w-6 h-6 mr-3 eco-icon-primary" />
+                📄 KYC Document Verification
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Pending KYC Verification */}
+                <div className="p-6 border-2 border-orange-200 rounded-xl bg-gradient-to-r from-orange-50 to-red-50">
+                  <h3 className="text-lg font-bold text-orange-800 mb-4">⚠️ Pending KYC Verifications (5)</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="p-4 bg-white rounded-lg border border-orange-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                            <User className="w-6 h-6 text-orange-600" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-orange-800">Priya Sharma</p>
+                            <p className="text-sm text-orange-600">Andheri Zone | +91 8765432109</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge className="bg-green-500 text-white text-xs">✅ Aadhaar</Badge>
+                              <Badge className="bg-red-500 text-white text-xs">❌ PAN</Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button size="sm" className="bg-blue-500 text-white">
+                            <Eye className="w-4 h-4 mr-1" />
+                            View Docs
+                          </Button>
+                          <Button size="sm" className="bg-green-500 text-white">
+                            ✅ Approve
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            ❌ Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-white rounded-lg border border-orange-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                            <User className="w-6 h-6 text-orange-600" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-orange-800">Amit Patel</p>
+                            <p className="text-sm text-orange-600">Borivali Zone | +91 7654321098</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge className="bg-red-500 text-white text-xs">❌ Aadhaar</Badge>
+                              <Badge className="bg-red-500 text-white text-xs">❌ PAN</Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button size="sm" className="bg-orange-500 text-white">
+                            <Upload className="w-4 h-4 mr-1" />
+                            Request Docs
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            📞 Contact
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* KYC Statistics */}
+                <div className="grid lg:grid-cols-3 gap-6">
+                  <Card className="bg-green-50 border-green-200">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-green-800 flex items-center">
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        Verified Partners
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-black text-green-700 mb-2">23</div>
+                      <div className="text-green-600 font-semibold">82% of total partners</div>
+                      <div className="text-sm text-green-500 mt-2">Complete Aadhaar + PAN</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-orange-50 border-orange-200">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-orange-800 flex items-center">
+                        <Clock className="w-5 h-5 mr-2" />
+                        Pending Review
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-black text-orange-700 mb-2">5</div>
+                      <div className="text-orange-600 font-semibold">18% pending verification</div>
+                      <div className="text-sm text-orange-500 mt-2">Awaiting document review</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-red-50 border-red-200">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-red-800 flex items-center">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        Incomplete KYC
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-black text-red-700 mb-2">2</div>
+                      <div className="text-red-600 font-semibold">Missing documents</div>
+                      <div className="text-sm text-red-500 mt-2">Requires follow-up</div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Assignments Tab */}
+        <TabsContent value="assignments" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <MapPin className="w-6 h-6 mr-3 eco-icon-primary" />
+                📍 Vendor Assignment Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-[hsl(var(--eco-secondary))]">Zone-wise Assignment</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="p-4 border rounded-lg bg-blue-50">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-bold text-blue-800">Santacruz Zone</h4>
+                        <Badge className="bg-blue-500 text-white">8 Partners</Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div>• Santacruz Sub-Vendor 1: 3 partners</div>
+                        <div>• Santacruz Sub-Vendor 2: 5 partners</div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border rounded-lg bg-green-50">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-bold text-green-800">Andheri Zone</h4>
+                        <Badge className="bg-green-500 text-white">7 Partners</Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div>• Andheri Sub-Vendor 1: 4 partners</div>
+                        <div>• Andheri Sub-Vendor 2: 3 partners</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-[hsl(var(--eco-secondary))]">Unassigned Partners</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-orange-800">Rahul Gupta</p>
+                          <p className="text-sm text-orange-600">Available for assignment</p>
+                          <p className="text-xs text-gray-600">Vehicle: Bike | Zone: Any</p>
+                        </div>
+                        <Button size="sm" className="bg-blue-500 text-white">
+                          Assign Zone
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-orange-800">Sanjay Yadav</p>
+                          <p className="text-sm text-orange-600">KYC pending</p>
+                          <p className="text-xs text-gray-600">Vehicle: Tempo | Preferred: Borivali</p>
+                        </div>
+                        <Button size="sm" variant="outline">
+                          Complete KYC First
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="space-y-6">
+          <Card className="eco-card">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center text-xl font-black">
+                <BarChart3 className="w-6 h-6 mr-3 eco-icon-primary" />
+                📊 Performance Analytics & Tracking
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-lg font-semibold text-gray-500 mb-4">
+                  Delivery Performance Dashboard
+                </p>
+                <p className="text-[hsl(var(--eco-text-muted))] font-semibold mb-6">
+                  Track delivery times, customer ratings, earnings, and route efficiency
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button className="eco-button">
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Generate Performance Report
+                  </Button>
+                  <Button className="eco-button-secondary">
+                    <Download className="w-5 h-5 mr-2" />
+                    Export Analytics
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </>
+  );
+}
+
+function BillingTransactionsContent({ orders, onAction }: any) {
+  const todayRevenue = Array.isArray(orders) ? orders
+    .filter((o: any) => new Date(o.createdAt).toDateString() === new Date().toDateString())
+    .reduce((sum: number, o: any) => sum + (o.total || 0), 0) : 0;
+  
+  const thisMonthRevenue = Array.isArray(orders) ? orders
+    .filter((o: any) => new Date(o.createdAt).getMonth() === new Date().getMonth())
+    .reduce((sum: number, o: any) => sum + (o.total || 0), 0) : 0;
+
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Billing & Transactions</h2>
+          <div className="flex space-x-2">
+            <Button 
+              className="eco-button"
+              onClick={() => onAction("Generate Invoice")}
+            >
+              Generate Invoice
+            </Button>
+            <Button 
+              className="eco-button-secondary"
+              onClick={() => onAction("Export Reports")}
+            >
+              Export Reports
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <StatsCard
+          title="Today's Revenue"
+          value={`₹${todayRevenue.toLocaleString()}`}
+          icon={<DollarSign className="w-6 h-6" />}
+          trend="+8% from yesterday"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Monthly Revenue"
+          value={`₹${thisMonthRevenue.toLocaleString()}`}
+          icon={<BarChart3 className="w-6 h-6" />}
+          trend="+15% from last month"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="Pending Payments"
+          value="₹12,450"
+          icon={<Clock className="w-6 h-6" />}
+          trend="8 customers"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+        <StatsCard
+          title="Payment Success Rate"
+          value="98.2%"
+          icon={<CreditCard className="w-6 h-6" />}
+          trend="Last 30 days"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Transactions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Order ID</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Payment Method</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.isArray(orders) && orders.slice(0, 5).map((order: any, index: number) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{order.id}</TableCell>
+                  <TableCell>{order.customerName}</TableCell>
+                  <TableCell className="font-semibold">₹{order.total}</TableCell>
+                  <TableCell>{order.paymentMethod}</TableCell>
+                  <TableCell>
+                    <Badge className={order.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
+                      {order.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{new Date(order.createdAt).toLocaleDateString('en-IN')}</TableCell>
+                  <TableCell>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => onAction("Download Invoice", order)}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function ProductManagementContent({ products, onAction }: any) {
+  const totalProducts = Array.isArray(products) ? products.length : 0;
+  const inStockProducts = Array.isArray(products) ? products.filter((p: any) => p.inStock).length : 0;
+  const lowStockProducts = Array.isArray(products) ? products.filter((p: any) => p.stockQuantity < 100).length : 0;
+
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Product Catalog Management</h2>
+          <div className="flex space-x-2">
+            <Button 
+              className="eco-button"
+              onClick={() => onAction("Add New Product")}
+            >
+              Add New Product
+            </Button>
+            <Button 
+              className="eco-button-secondary"
+              onClick={() => onAction("Bulk Update Prices")}
+            >
+              Bulk Update Prices
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <StatsCard
+          title="Total Products"
+          value={totalProducts.toString()}
+          icon={<Package className="w-6 h-6" />}
+          trend="7 categories"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="In Stock"
+          value={inStockProducts.toString()}
+          icon={<Package className="w-6 h-6" />}
+          trend={`${Math.round((inStockProducts/totalProducts)*100)}% available`}
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Low Stock Alert"
+          value={lowStockProducts.toString()}
+          icon={<AlertTriangle className="w-6 h-6" />}
+          trend="Need reorder"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+        <StatsCard
+          title="Avg Price"
+          value={`₹${Array.isArray(products) ? Math.round(products.reduce((sum: number, p: any) => sum + (p.price || 0), 0) / products.length) : 0}`}
+          icon={<DollarSign className="w-6 h-6" />}
+          trend="Per unit"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Product Inventory</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>MRP</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.isArray(products) && products.map((product: any, index: number) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell className="capitalize">{product.category}</TableCell>
+                  <TableCell className="font-semibold">₹{product.price}</TableCell>
+                  <TableCell className="text-sm text-gray-500">₹{product.mrp}</TableCell>
+                  <TableCell className={product.stockQuantity < 100 ? 'text-orange-600 font-semibold' : ''}>
+                    {product.stockQuantity}
+                  </TableCell>
+                  <TableCell>{product.unit}</TableCell>
+                  <TableCell>
+                    <Badge className={product.inStock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                      {product.inStock ? 'In Stock' : 'Out of Stock'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => onAction("Edit Product", product)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => onAction("Manage Inventory", product)}
+                      >
+                        <Package className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function ComplaintsFeedbackContent({ complaints, onAction }: any) {
+  const totalComplaints = Array.isArray(complaints) ? complaints.length : 0;
+  const pendingComplaints = Array.isArray(complaints) ? complaints.filter((c: any) => c.status === 'pending').length : 0;
+  const resolvedComplaints = Array.isArray(complaints) ? complaints.filter((c: any) => c.status === 'resolved').length : 0;
+
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Customer Complaints & Support</h2>
+          <div className="flex space-x-2">
+            <Button 
+              className="eco-button"
+              onClick={() => onAction("Create New Ticket")}
+            >
+              New Ticket
+            </Button>
+            <Button 
+              className="eco-button-secondary"
+              onClick={() => onAction("Export Complaints Report")}
+            >
+              Export Report
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <StatsCard
+          title="Total Complaints"
+          value={totalComplaints.toString()}
+          icon={<MessageSquare className="w-6 h-6" />}
+          trend="This month"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="Pending Resolution"
+          value={pendingComplaints.toString()}
+          icon={<Clock className="w-6 h-6" />}
+          trend="Needs attention"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+        <StatsCard
+          title="Resolved"
+          value={resolvedComplaints.toString()}
+          icon={<Package className="w-6 h-6" />}
+          trend={`${Math.round((resolvedComplaints/totalComplaints)*100)}% success rate`}
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Avg Resolution Time"
+          value="4.2 hours"
+          icon={<Clock className="w-6 h-6" />}
+          trend="Target: 6 hours"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Support Tickets</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ticket ID</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Assigned To</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.isArray(complaints) && complaints.map((complaint: any, index: number) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{complaint.id}</TableCell>
+                  <TableCell>{complaint.customerName}</TableCell>
+                  <TableCell className="max-w-xs truncate">{complaint.subject}</TableCell>
+                  <TableCell className="capitalize">{complaint.category}</TableCell>
+                  <TableCell>
+                    <Badge className={
+                      complaint.priority === 'high' ? 'bg-red-100 text-red-700' :
+                      complaint.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-green-100 text-green-700'
+                    }>
+                      {complaint.priority}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={
+                      complaint.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                      complaint.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                      'bg-orange-100 text-orange-700'
+                    }>
+                      {complaint.status.replace('_', ' ')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{complaint.assignedTo}</TableCell>
+                  <TableCell>{new Date(complaint.createdAt).toLocaleDateString('en-IN')}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => onAction("Edit Ticket", complaint)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => onAction("Reply to Customer", complaint)}
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function OffersPromotionsContent({ onAction }: any) {
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Offers & Promotions</h2>
+          <div className="flex space-x-2">
+            <Button 
+              className="eco-button"
+              onClick={() => onAction("Create New Offer")}
+            >
+              Create New Offer
+            </Button>
+            <Button 
+              className="eco-button-secondary"
+              onClick={() => onAction("View Campaign Analytics")}
+            >
+              Campaign Analytics
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <StatsCard
+          title="Active Offers"
+          value="5"
+          icon={<Tag className="w-6 h-6" />}
+          trend="Running campaigns"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="Total Redemptions"
+          value="1,247"
+          icon={<Users className="w-6 h-6" />}
+          trend="This month"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Revenue from Offers"
+          value="₹45,600"
+          icon={<DollarSign className="w-6 h-6" />}
+          trend="+25% uplift"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+        <StatsCard
+          title="Success Rate"
+          value="68%"
+          icon={<TrendingUp className="w-6 h-6" />}
+          trend="Conversion rate"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Active Offers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Offer Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Discount</TableHead>
+                <TableHead>Valid Until</TableHead>
+                <TableHead>Usage Count</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium">New Customer Special</TableCell>
+                <TableCell>First Order</TableCell>
+                <TableCell>20% off + Free Delivery</TableCell>
+                <TableCell>31st Jan 2024</TableCell>
+                <TableCell>156 / 500</TableCell>
+                <TableCell><Badge className="bg-green-100 text-green-700">Active</Badge></TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="outline"><Edit className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="outline"><BarChart3 className="w-4 h-4" /></Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Monthly Subscription Discount</TableCell>
+                <TableCell>Subscription</TableCell>
+                <TableCell>₹100 off monthly plan</TableCell>
+                <TableCell>15th Feb 2024</TableCell>
+                <TableCell>89 / 200</TableCell>
+                <TableCell><Badge className="bg-green-100 text-green-700">Active</Badge></TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="outline"><Edit className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="outline"><BarChart3 className="w-4 h-4" /></Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Bulk Order Discount</TableCell>
+                <TableCell>Volume</TableCell>
+                <TableCell>15% off orders above ₹500</TableCell>
+                <TableCell>28th Feb 2024</TableCell>
+                <TableCell>67 / 100</TableCell>
+                <TableCell><Badge className="bg-green-100 text-green-700">Active</Badge></TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="outline"><Edit className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="outline"><BarChart3 className="w-4 h-4" /></Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function ReportsAnalyticsContent() {
+  return (
+    <>
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Reports & Analytics</h2>
+          <div className="flex space-x-2">
+            <Button className="eco-button">Generate Custom Report</Button>
+            <Button className="eco-button-secondary"><Download className="w-4 h-4 mr-2" />Export Data</Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <StatsCard
+          title="Total Revenue"
+          value="₹2,45,600"
+          icon={<DollarSign className="w-6 h-6" />}
+          trend="+18% vs last month"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        <StatsCard
+          title="Orders Fulfilled"
+          value="3,847"
+          icon={<Package className="w-6 h-6" />}
+          trend="+12% vs last month"
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+        />
+        <StatsCard
+          title="Customer Growth"
+          value="24%"
+          icon={<TrendingUp className="w-6 h-6" />}
+          trend="Monthly growth rate"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+        />
+        <StatsCard
+          title="Avg Order Value"
+          value="₹127"
+          icon={<BarChart3 className="w-6 h-6" />}
+          trend="+₹8 vs last month"
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Reports</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Button className="w-full eco-button-secondary justify-start">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Daily Sales Report
+              </Button>
+              <Button className="w-full eco-button-secondary justify-start">
+                <Users className="w-4 h-4 mr-2" />
+                Customer Acquisition Report
+              </Button>
+              <Button className="w-full eco-button-secondary justify-start">
+                <Truck className="w-4 h-4 mr-2" />
+                Delivery Performance Report
+              </Button>
+              <Button className="w-full eco-button-secondary justify-start">
+                <Store className="w-4 h-4 mr-2" />
+                Vendor Performance Report
+              </Button>
+              <Button className="w-full eco-button-secondary justify-start">
+                <Package className="w-4 h-4 mr-2" />
+                Inventory Movement Report
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance Metrics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span>On-time Delivery Rate</span>
+                <span className="font-semibold text-green-600">94.5%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Customer Satisfaction</span>
+                <span className="font-semibold">4.6/5.0</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Order Fulfillment Rate</span>
+                <span className="font-semibold text-green-600">98.2%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Payment Success Rate</span>
+                <span className="font-semibold">99.1%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Vendor Reliability</span>
+                <span className="font-semibold text-green-600">96.8%</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Performing Products (This Month)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product</TableHead>
+                <TableHead>Units Sold</TableHead>
+                <TableHead>Revenue</TableHead>
+                <TableHead>Growth</TableHead>
+                <TableHead>Margin</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium">Toned Milk</TableCell>
+                <TableCell>1,850L</TableCell>
+                <TableCell>₹51,800</TableCell>
+                <TableCell className="text-green-600">+15%</TableCell>
+                <TableCell>22%</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Full Cream Milk</TableCell>
+                <TableCell>1,200L</TableCell>
+                <TableCell>₹38,400</TableCell>
+                <TableCell className="text-green-600">+8%</TableCell>
+                <TableCell>25%</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Fresh Curd</TableCell>
+                <TableCell>450 units</TableCell>
+                <TableCell>₹20,250</TableCell>
+                <TableCell className="text-green-600">+22%</TableCell>
+                <TableCell>35%</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function NotificationCenterContent() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Notification Center</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p>Manage system notifications and alerts.</p>
+        <div className="mt-4">
+          <Button className="eco-button mr-2">Send Notification</Button>
+          <Button className="eco-button-secondary">Notification History</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SystemSettingsContent() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>System Configuration</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p>Configure system settings and application preferences.</p>
+        <div className="mt-4">
+          <Button className="eco-button mr-2">General Settings</Button>
+          <Button className="eco-button-secondary">Backup Settings</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StaffAccessContent() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Staff Access Management</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p>Manage staff accounts, roles, and permissions.</p>
+        <div className="mt-4">
+          <Button className="eco-button mr-2">Add Staff</Button>
+          <Button className="eco-button-secondary">Role Permissions</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface StatsCardProps {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  trend: string;
+  color: string;
+  bgColor: string;
+}
+
+function StatsCard({ title, value, icon, trend, color, bgColor }: StatsCardProps) {
+  return (
+    <Card className="stats-card group cursor-pointer">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className={`p-2 sm:p-3 rounded-xl ${bgColor} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`${color} w-5 h-5 sm:w-6 sm:h-6`}>{icon}</div>
+          </div>
+          <div className="text-right">
+            <p className="animated-counter text-xl sm:text-2xl lg:text-3xl font-bold">{value}</p>
+          </div>
+        </div>
+        <div>
+          <p className="dairy-body font-semibold mb-1 text-sm sm:text-base truncate">{title}</p>
+          <p className="dairy-muted text-xs sm:text-sm truncate">{trend}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface ActivityItemProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  time: string;
+  urgent?: boolean;
+}
+
+function ActivityItem({ icon, title, description, time, urgent }: ActivityItemProps) {
+  return (
+    <div className={`flex items-start space-x-3 p-3 rounded-lg border ${urgent ? 'border-orange-200 bg-orange-50' : 'border-gray-200'}`}>
+      <div className="flex-shrink-0 mt-1">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm text-[hsl(var(--eco-text))]">{title}</p>
+        <p className="text-sm text-[hsl(var(--eco-text-muted))]">{description}</p>
+        <p className="text-xs text-[hsl(var(--eco-text-muted))] mt-1">{time}</p>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// ALL 20+ CONTENT SECTIONS FOR COMPREHENSIVE ADMIN DASHBOARD
+// =============================================================================
+
+// 1. Subvendors Content
+function SubvendorsContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">🏪 Subvendor Management</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Branch vendors with parent vendor hierarchy</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Add Subvendor")}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Subvendor
+          </Button>
+          <Button className="eco-button-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Export Data
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Total Subvendors" value="48" icon={<Store className="w-6 h-6" />} trend="Across 3 zones" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Daily Circulation" value="4,250L" icon={<Milk className="w-6 h-6" />} trend="Today's supply" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Revenue Contribution" value="₹2,34,500" icon={<DollarSign className="w-6 h-6" />} trend="This month" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="Pending Dues" value="₹45,000" icon={<AlertTriangle className="w-6 h-6" />} trend="8 subvendors" color="text-orange-600" bgColor="bg-orange-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Users className="w-6 h-6 mr-3" />
+            Subvendor Performance Dashboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Subvendor Management System</p>
+            <p className="text-gray-400 mb-6">Track daily circulation, attendance, ratings, and revenue per subvendor</p>
+            <Button className="eco-button">Build Subvendor Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 2. Customers Content
+function CustomersContent({ customers, onAction, onSearch }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">👥 Customer Management</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Active customers with subscription tracking</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Add Customer")}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Customer
+          </Button>
+          <Button className="eco-button-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatsCard title="Active Customers" value="1,245" icon={<Users className="w-6 h-6" />} trend="+45 this month" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="New Customers" value="23" icon={<User className="w-6 h-6" />} trend="This week" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Daily Subscriptions" value="850" icon={<Calendar className="w-6 h-6" />} trend="Active plans" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="Pending Payments" value="₹1,25,000" icon={<CreditCard className="w-6 h-6" />} trend="45 customers" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="Loyalty Points" value="2,45,000" icon={<Tag className="w-6 h-6" />} trend="Total issued" color="text-yellow-600" bgColor="bg-yellow-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Users className="w-6 h-6 mr-3" />
+            Customer Analytics Dashboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Customer Management System</p>
+            <p className="text-gray-400 mb-6">Track consumption trends, payment history, complaints, and loyalty programs</p>
+            <Button className="eco-button">Build Customer Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 3. Milk Circulation Content
+function MilkCirculationContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">🥛 Milk Circulation Control</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Real-time supply tracking and distribution</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Update Circulation")}>
+            <Settings className="w-4 h-4 mr-2" />
+            Update Circulation
+          </Button>
+          <Button className="eco-button-secondary">
+            <MapPin className="w-4 h-4 mr-2" />
+            Regional View
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Total Procured Today" value="5,200L" icon={<Milk className="w-6 h-6" />} trend="From all vendors" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Total Distributed" value="4,850L" icon={<Truck className="w-6 h-6" />} trend="93% of target" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Over-supply Alert" value="350L" icon={<AlertTriangle className="w-6 h-6" />} trend="Excess inventory" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="Wastage Today" value="45L" icon={<AlertTriangle className="w-6 h-6" />} trend="0.9% wastage" color="text-red-600" bgColor="bg-red-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Milk className="w-6 h-6 mr-3" />
+            Live Circulation Dashboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Milk className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Milk Circulation System</p>
+            <p className="text-gray-400 mb-6">Real-time tracking, regional maps, AI forecasting, and wastage analysis</p>
+            <Button className="eco-button">Build Circulation Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 4. Revenue & Finance Content
+function RevenueFinanceContent({ orders, onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">💰 Revenue & Finance</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Financial analytics and profit tracking</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Generate Invoice")}>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Generate Invoice
+          </Button>
+          <Button className="eco-button-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Today's Revenue" value="₹1,25,750" icon={<DollarSign className="w-6 h-6" />} trend="+12% vs yesterday" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Monthly Revenue" value="₹34,50,000" icon={<BarChart3 className="w-6 h-6" />} trend="+18% vs last month" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Outstanding Payments" value="₹2,45,000" icon={<AlertTriangle className="w-6 h-6" />} trend="45 pending" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="Profit Margin" value="32%" icon={<TrendingUp className="w-6 h-6" />} trend="+5% this month" color="text-purple-600" bgColor="bg-purple-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <DollarSign className="w-6 h-6 mr-3" />
+            Financial Analytics Dashboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Revenue & Finance System</p>
+            <p className="text-gray-400 mb-6">Profit/loss analysis, expense breakdown, payment settlements, and tax calculations</p>
+            <Button className="eco-button">Build Finance Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 5. Requirements & Forecast Content
+function RequirementsForecastContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">📊 Requirements & Forecast</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">AI-powered demand prediction and planning</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Adjust Forecast")}>
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Adjust Forecast
+          </Button>
+          <Button className="eco-button-secondary">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            AI Predictions
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Today's Requirement" value="4,700L" icon={<Calendar className="w-6 h-6" />} trend="vs 4,200L actual" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Weekly Forecast" value="32,500L" icon={<TrendingUp className="w-6 h-6" />} trend="+8% increase" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Shortage Alert" value="500L" icon={<AlertTriangle className="w-6 h-6" />} trend="Tomorrow's gap" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="AI Accuracy" value="94%" icon={<BarChart3 className="w-6 h-6" />} trend="Prediction model" color="text-purple-600" bgColor="bg-purple-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <TrendingUp className="w-6 h-6 mr-3" />
+            AI-Powered Forecasting Dashboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Forecasting & Planning System</p>
+            <p className="text-gray-400 mb-6">Seasonal trends, AI predictions, shortage alerts, and vendor matching</p>
+            <Button className="eco-button">Build Forecast Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 6. Complaints & Support Content
+function ComplaintsSupportContent({ complaints, onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">📞 Complaints & Support</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Customer support and complaint resolution</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Assign Complaint")}>
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Assign Complaint
+          </Button>
+          <Button className="eco-button-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Total Complaints" value="23" icon={<MessageSquare className="w-6 h-6" />} trend="8 pending" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Avg Response Time" value="2.5 hrs" icon={<Clock className="w-6 h-6" />} trend="SLA: 4 hrs" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Customer Satisfaction" value="4.2/5" icon={<TrendingUp className="w-6 h-6" />} trend="CSAT score" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="Resolved Today" value="12" icon={<CheckCircle className="w-6 h-6" />} trend="85% resolution" color="text-orange-600" bgColor="bg-orange-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <MessageSquare className="w-6 h-6 mr-3" />
+            Complaint Management System
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Support & Complaint System</p>
+            <p className="text-gray-400 mb-6">Ticket management, escalation matrix, live chat, and CSAT tracking</p>
+            <Button className="eco-button">Build Support Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
+// 8. Inventory Management Content
+function InventoryManagementContent({ onAction }: any) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [showStockAdjustment, setShowStockAdjustment] = useState(false);
+  const [selectedProductForStock, setSelectedProductForStock] = useState<any>(null);
+  const [stockAdjustmentData, setStockAdjustmentData] = useState({
+    quantity: '',
+    adjustmentType: 'add' // 'add', 'remove', 'set'
+  });
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'milk',
+    type: 'milk',
+    description: '',
+    price: '',
+    unit: '500ml',
+    stock: '0',
+    imageUrl: '',
+    isActive: true
+  });
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string>('');
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+    retry: false,
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
+    retry: false,
+  });
+
+  const addProductMutation = useMutation({
+    mutationFn: async (newProduct: any) => {
+      const response = await fetch('/api/admin/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(newProduct),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to add product');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "✅ Product added successfully!" });
+      setShowAddForm(false);
+      setFormData({ name: '', category: 'milk', type: 'milk', description: '', price: '', unit: '500ml', stock: '0', imageUrl: '', isActive: true });
+      setUploadMethod('url');
+      setPreviewImage('');
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "❌ Error adding product", 
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/admin/products/${data.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data.updates),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update product');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "✅ Product updated successfully!" });
+      setEditingId(null);
+      setFormData({ name: '', category: 'milk', type: 'milk', description: '', price: '', unit: '500ml', stock: '0', imageUrl: '', isActive: true });
+      setUploadMethod('url');
+      setPreviewImage('');
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "❌ Error updating product", 
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete product');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "✅ Product deleted successfully!" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "❌ Error deleting product", 
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const adjustStockMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const newStock = stockAdjustmentData.adjustmentType === 'add' 
+        ? selectedProductForStock.stock + parseInt(stockAdjustmentData.quantity)
+        : stockAdjustmentData.adjustmentType === 'remove'
+        ? Math.max(0, selectedProductForStock.stock - parseInt(stockAdjustmentData.quantity))
+        : parseInt(stockAdjustmentData.quantity);
+
+      const response = await fetch(`/api/admin/products/${selectedProductForStock.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ stock: newStock }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to adjust stock');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "✅ Stock adjusted successfully!" });
+      setShowStockAdjustment(false);
+      setStockAdjustmentData({ quantity: '', adjustmentType: 'add' });
+      setSelectedProductForStock(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "❌ Error adjusting stock", 
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!formData.name || !formData.price) {
+      toast({ title: "Please fill required fields", variant: "destructive" });
+      return;
+    }
+
+    if (editingId) {
+      updateProductMutation.mutate({ id: editingId, updates: formData });
+    } else {
+      addProductMutation.mutate(formData);
+    }
+  };
+
+  const totalStock = products.reduce((sum: number, p: any) => sum + (p.stock || 0), 0);
+  const lowStockItems = products.filter((p: any) => (p.stock || 0) < 20).length;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">📦 Product Management</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Manage your dairy products inventory</p>
+        </div>
+        <Button className="eco-button" onClick={() => setShowAddForm(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Product
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Total Products" value={products.length.toString()} icon={<Package className="w-6 h-6" />} trend="In catalog" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Total Stock" value={totalStock.toString()} icon={<Package className="w-6 h-6" />} trend="Units in warehouse" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Low Stock Items" value={lowStockItems.toString()} icon={<AlertTriangle className="w-6 h-6" />} trend="Need reordering" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="Categories" value="2" icon={<Tag className="w-6 h-6" />} trend="Milk & Dairy" color="text-purple-600" bgColor="bg-purple-50" />
+      </div>
+
+      {showStockAdjustment && selectedProductForStock && (
+        <Card className="border-2 border-blue-300 bg-blue-50 shadow-xl mb-6">
+          <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <CardTitle className="text-lg">📦 Adjust Stock: {selectedProductForStock.name}</CardTitle>
+            <p className="text-sm text-blue-100 mt-1">Current Stock: {selectedProductForStock.stock} units</p>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Adjustment Type</label>
+                <select 
+                  value={stockAdjustmentData.adjustmentType}
+                  onChange={(e) => setStockAdjustmentData({...stockAdjustmentData, adjustmentType: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="add">➕ Add Stock</option>
+                  <option value="remove">➖ Remove Stock</option>
+                  <option value="set">🎯 Set to</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Quantity</label>
+                <Input 
+                  placeholder="Enter quantity" 
+                  type="number"
+                  min="0"
+                  value={stockAdjustmentData.quantity} 
+                  onChange={(e) => setStockAdjustmentData({...stockAdjustmentData, quantity: e.target.value})}
+                  className="border-gray-300 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            {stockAdjustmentData.quantity && (
+              <div className="p-3 bg-white border border-blue-200 rounded-md">
+                <p className="text-sm text-gray-600">
+                  {stockAdjustmentData.adjustmentType === 'add' && (
+                    <>✅ New stock: <span className="font-bold text-blue-600">{selectedProductForStock.stock + parseInt(stockAdjustmentData.quantity || 0)} units</span></>
+                  )}
+                  {stockAdjustmentData.adjustmentType === 'remove' && (
+                    <>✅ New stock: <span className="font-bold text-blue-600">{Math.max(0, selectedProductForStock.stock - parseInt(stockAdjustmentData.quantity || 0))} units</span></>
+                  )}
+                  {stockAdjustmentData.adjustmentType === 'set' && (
+                    <>✅ New stock: <span className="font-bold text-blue-600">{stockAdjustmentData.quantity} units</span></>
+                  )}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-4">
+              <Button 
+                className="bg-blue-500 hover:bg-blue-600 text-white flex-1"
+                onClick={() => adjustStockMutation.mutate(null)}
+                disabled={!stockAdjustmentData.quantity || adjustStockMutation.isPending}
+              >
+                {adjustStockMutation.isPending ? 'Adjusting...' : '✅ Adjust Stock'}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  setShowStockAdjustment(false);
+                  setStockAdjustmentData({ quantity: '', adjustmentType: 'add' });
+                  setSelectedProductForStock(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showAddForm && (
+        <Card className="eco-card border-2 border-[var(--eco-primary)] shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
+            <CardTitle className="text-xl text-[hsl(var(--eco-secondary))]">
+              {editingId ? '✏️ Edit Product' : '➕ Add New Product'}
+            </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">Fill in the product details below</p>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            {/* First Row - Key Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Product Name <span className="text-red-500">*</span></label>
+                <Input 
+                  placeholder="e.g., Fresh Whole Milk" 
+                  value={formData.name} 
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="border-gray-300 focus:border-green-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Price (₹) <span className="text-red-500">*</span></label>
+                <Input 
+                  placeholder="e.g., 55" 
+                  type="number" 
+                  step="0.01"
+                  value={formData.price} 
+                  onChange={(e) => setFormData({...formData, price: e.target.value})}
+                  className="border-gray-300 focus:border-green-500"
+                />
+              </div>
+            </div>
+
+            {/* Second Row - Category & Type */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Category <span className="text-red-500">*</span></label>
+                <select 
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  {categories.length === 0 ? (
+                    <option value="">No categories available</option>
+                  ) : (
+                    categories.map((cat: any) => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))
+                  )}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Type <span className="text-red-500">*</span></label>
+                <select 
+                  value={formData.type}
+                  onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="milk">Milk</option>
+                  <option value="ghee">Ghee</option>
+                  <option value="butter">Butter</option>
+                  <option value="cheese">Cheese</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Third Row - Unit & Stock */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Unit <span className="text-red-500">*</span></label>
+                <Input 
+                  placeholder="e.g., 250ml, 500ml, 1L, 100g, 1kg" 
+                  value={formData.unit}
+                  onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                  className="border-gray-300 focus:border-green-500"
+                />
+                <p className="text-xs text-gray-500">Enter any unit (250ml, 500ml, 1L, 100g, 1kg, etc.)</p>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Stock Quantity</label>
+                <Input 
+                  placeholder="e.g., 100" 
+                  type="number"
+                  min="0"
+                  value={formData.stock} 
+                  onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                  className="border-gray-300 focus:border-green-500"
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">Description</label>
+              <textarea 
+                placeholder="e.g., Fresh pasteurized cow milk from local farms" 
+                value={formData.description} 
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              />
+            </div>
+
+            {/* Image Upload */}
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700">Product Image</label>
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setUploadMethod('url')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition ${
+                    uploadMethod === 'url'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  🔗 URL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMethod('file')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition ${
+                    uploadMethod === 'file'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  📤 Upload
+                </button>
+              </div>
+
+              {uploadMethod === 'url' ? (
+                <Input 
+                  placeholder="https://example.com/milk.jpg" 
+                  value={formData.imageUrl} 
+                  onChange={(e) => {
+                    setFormData({...formData, imageUrl: e.target.value});
+                    setPreviewImage(e.target.value);
+                  }}
+                  className="border-gray-300 focus:border-green-500"
+                />
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setUploadingImage(true);
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const base64String = event.target?.result as string;
+                          setFormData({...formData, imageUrl: base64String});
+                          setPreviewImage(base64String);
+                          setUploadingImage(false);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    disabled={uploadingImage}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                  />
+                  <p className="text-xs text-gray-500">Upload JPG, PNG, or GIF (recommended: square 500x500px)</p>
+                </div>
+              )}
+
+              {/* Square Image Preview */}
+              {previewImage && (
+                <div className="mt-4 flex flex-col items-center">
+                  <div className="w-32 h-32 rounded-lg border-2 border-green-300 overflow-hidden bg-gray-50 flex items-center justify-center">
+                    <img 
+                      src={previewImage} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Preview (Square Size)</p>
+                </div>
+              )}
+            </div>
+
+            {/* Active/Inactive Toggle */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-gray-700">Product Status</label>
+                <p className="text-xs text-gray-600">Mark as active or inactive</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium ${formData.isActive ? 'text-green-600' : 'text-gray-400'}`}>
+                  {formData.isActive ? '✅ Active' : '⏸ Inactive'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFormData({...formData, isActive: !formData.isActive})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    formData.isActive ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      formData.isActive ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t">
+              <Button 
+                className="eco-button flex-1"
+                onClick={handleSubmit}
+                disabled={addProductMutation.isPending || updateProductMutation.isPending}
+              >
+                {addProductMutation.isPending || updateProductMutation.isPending ? (
+                  <>Loading...</>
+                ) : (
+                  <>
+                    {editingId ? '💾 Update Product' : '✅ Add Product'}
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => { 
+                  setShowAddForm(false); 
+                  setEditingId(null); 
+                  setFormData({ name: '', category: 'milk', type: 'milk', description: '', price: '', unit: '500ml', stock: '0', imageUrl: '', isActive: true });
+                  setUploadMethod('url');
+                  setPreviewImage('');
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+
+            {/* Validation Errors */}
+            {(!formData.name || !formData.price) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+                ⚠️ Please fill in all required fields (marked with *)
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Package className="w-6 h-6 mr-3" />
+            Products List
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {Array.isArray(products) && products.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50 hover:bg-gray-50">
+                    <TableHead className="font-bold text-gray-700">Name</TableHead>
+                    <TableHead className="font-bold text-gray-700">Category</TableHead>
+                    <TableHead className="font-bold text-gray-700">Price</TableHead>
+                    <TableHead className="font-bold text-gray-700">Unit</TableHead>
+                    <TableHead className="font-bold text-gray-700">Stock</TableHead>
+                    <TableHead className="font-bold text-gray-700">Status</TableHead>
+                    <TableHead className="font-bold text-gray-700">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product: any) => (
+                    <TableRow key={product.id} className="hover:bg-blue-50 transition-colors">
+                      <TableCell className="font-semibold text-gray-900">{product.name}</TableCell>
+                      <TableCell className="text-gray-700 capitalize">{product.category}</TableCell>
+                      <TableCell className="font-semibold text-green-600">₹{parseFloat(product.price).toFixed(2)}</TableCell>
+                      <TableCell className="text-gray-700">{product.unit}</TableCell>
+                      <TableCell>
+                        <Badge className={product.stock < 20 ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}>
+                          {product.stock} units
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={product.isActive ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-gray-100 text-gray-800 border border-gray-300'}>
+                          {product.isActive ? '✅ Active' : '⏸ Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="space-x-2">
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-500 hover:bg-blue-600 text-white"
+                          onClick={() => { setSelectedProductForStock(product); setShowStockAdjustment(true); }}
+                        >
+                          📦 Stock
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="hover:bg-blue-50"
+                          onClick={() => { setEditingId(product.id); setFormData({ name: product.name, category: product.category, type: product.type, description: product.description || '', price: product.price, unit: product.unit, stock: product.stock, imageUrl: product.imageUrl || '', isActive: product.isActive }); setShowAddForm(true); }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          disabled={deleteProductMutation.isPending}
+                          onClick={() => deleteProductMutation.mutate(product.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No products found. Add your first product!</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 9. Invoices & Payments Content
+function InvoicesPaymentsContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">💳 Invoices & Payments</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Billing automation and payment tracking</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Generate Invoice")}>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Generate Invoice
+          </Button>
+          <Button className="eco-button-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Payment Report
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Pending Invoices" value="34" icon={<FileText className="w-6 h-6" />} trend="₹2,45,000 total" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Paid Invoices" value="156" icon={<CheckCircle className="w-6 h-6" />} trend="This month" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Auto Invoices" value="89%" icon={<Settings className="w-6 h-6" />} trend="Automation rate" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="GST Collected" value="₹65,000" icon={<DollarSign className="w-6 h-6" />} trend="This month" color="text-orange-600" bgColor="bg-orange-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <CreditCard className="w-6 h-6 mr-3" />
+            Billing & Payment System
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Automated Billing Platform</p>
+            <p className="text-gray-400 mb-6">Auto-invoicing, payment modes, GST calculations, and reconciliation</p>
+            <Button className="eco-button">Build Billing Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 10. Employee Management Content
+function EmployeeManagementContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">👨‍💼 Employee Management</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Staff management and payroll system</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Add Employee")}>
+            <User className="w-4 h-4 mr-2" />
+            Add Employee
+          </Button>
+          <Button className="eco-button-secondary">
+            <Clock className="w-4 h-4 mr-2" />
+            Attendance Report
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatsCard title="Total Employees" value="45" icon={<Users className="w-6 h-6" />} trend="All departments" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Present Today" value="42" icon={<CheckCircle className="w-6 h-6" />} trend="93% attendance" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Delivery Staff" value="28" icon={<Truck className="w-6 h-6" />} trend="Field team" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="Monthly Payroll" value="₹8,50,000" icon={<DollarSign className="w-6 h-6" />} trend="Total salaries" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="Leave Requests" value="7" icon={<Calendar className="w-6 h-6" />} trend="Pending approval" color="text-yellow-600" bgColor="bg-yellow-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <UserCog className="w-6 h-6 mr-3" />
+            Human Resource Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <UserCog className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Employee Management System</p>
+            <p className="text-gray-400 mb-6">Attendance tracking, payroll, KYC documents, and performance metrics</p>
+            <Button className="eco-button">Build HR Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 11. Role & Permissions Content
+function RolePermissionsContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">🔐 Role & Permissions</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Access control and user role management</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Create Role")}>
+            <Shield className="w-4 h-4 mr-2" />
+            Create Role
+          </Button>
+          <Button className="eco-button-secondary">
+            <Settings className="w-4 h-4 mr-2" />
+            Audit Trail
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Active Roles" value="8" icon={<Shield className="w-6 h-6" />} trend="System roles" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Total Users" value="156" icon={<Users className="w-6 h-6" />} trend="With role access" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Permission Sets" value="24" icon={<Settings className="w-6 h-6" />} trend="Granular controls" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="Access Violations" value="2" icon={<AlertTriangle className="w-6 h-6" />} trend="This week" color="text-orange-600" bgColor="bg-orange-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Shield className="w-6 h-6 mr-3" />
+            Access Control Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Role-Based Access Control</p>
+            <p className="text-gray-400 mb-6">Multi-level hierarchy, granular permissions, and security audit trails</p>
+            <Button className="eco-button">Build Access Control Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 12. Settings & Configuration Content
+function SettingsConfigContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">⚙️ Settings & Configuration</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">System preferences and configurations</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Save Settings")}>
+            <Settings className="w-4 h-4 mr-2" />
+            Save Settings
+          </Button>
+          <Button className="eco-button-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Backup Config
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="System Configs" value="45" icon={<Settings className="w-6 h-6" />} trend="Active settings" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="API Integrations" value="8" icon={<Settings className="w-6 h-6" />} trend="Connected services" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Backup Status" value="✓" icon={<CheckCircle className="w-6 h-6" />} trend="Last: 2 hours ago" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="System Health" value="98%" icon={<TrendingUp className="w-6 h-6" />} trend="All systems operational" color="text-orange-600" bgColor="bg-orange-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Settings className="w-6 h-6 mr-3" />
+            System Configuration Center
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Settings className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Configuration Management</p>
+            <p className="text-gray-400 mb-6">General settings, notifications, payment gateways, and API integrations</p>
+            <Button className="eco-button">Build Settings Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 13. Bank Accounts & Finance Content
+function BankAccountsFinanceContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">🏦 Bank Accounts & Finance</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Banking integration and cash flow management</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Add Bank Account")}>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Add Bank Account
+          </Button>
+          <Button className="eco-button-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Financial Report
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Linked Accounts" value="5" icon={<CreditCard className="w-6 h-6" />} trend="Bank accounts" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Total Balance" value="₹45,67,000" icon={<DollarSign className="w-6 h-6" />} trend="Across all accounts" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Daily Cash Flow" value="₹1,25,000" icon={<TrendingUp className="w-6 h-6" />} trend="Net inflow" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="Reconciled Txns" value="98%" icon={<CheckCircle className="w-6 h-6" />} trend="Auto-matched" color="text-orange-600" bgColor="bg-orange-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <CreditCard className="w-6 h-6 mr-3" />
+            Banking & Finance Center
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Banking Integration Platform</p>
+            <p className="text-gray-400 mb-6">Account management, cash flow tracking, automated reconciliation, and P&L statements</p>
+            <Button className="eco-button">Build Banking Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 14. Audit Logs Content
+function AuditLogsContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">📜 Audit Logs</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Security monitoring and activity tracking</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("View Logs")}>
+            <Eye className="w-4 h-4 mr-2" />
+            View Logs
+          </Button>
+          <Button className="eco-button-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Export Audit Trail
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Login Activities" value="1,245" icon={<User className="w-6 h-6" />} trend="Last 24 hours" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Data Changes" value="67" icon={<Edit className="w-6 h-6" />} trend="Modifications logged" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Failed Logins" value="5" icon={<AlertTriangle className="w-6 h-6" />} trend="Security alerts" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="API Calls" value="2,456" icon={<Settings className="w-6 h-6" />} trend="External requests" color="text-purple-600" bgColor="bg-purple-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <FileText className="w-6 h-6 mr-3" />
+            Security Audit Dashboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Comprehensive Audit System</p>
+            <p className="text-gray-400 mb-6">Login tracking, data modifications, security alerts, and compliance reporting</p>
+            <Button className="eco-button">Build Audit Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 15. Marketing Campaigns Content
+function MarketingCampaignsContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">📢 Marketing Campaigns</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Customer engagement and promotional campaigns</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Create Campaign")}>
+            <Tag className="w-4 h-4 mr-2" />
+            Create Campaign
+          </Button>
+          <Button className="eco-button-secondary">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Campaign Analytics
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatsCard title="Active Campaigns" value="8" icon={<Tag className="w-6 h-6" />} trend="Running now" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Total Reach" value="12,450" icon={<Users className="w-6 h-6" />} trend="Customers reached" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Conversion Rate" value="15.6%" icon={<TrendingUp className="w-6 h-6" />} trend="Campaign success" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="SMS Sent" value="3,245" icon={<MessageSquare className="w-6 h-6" />} trend="This month" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="Email Campaigns" value="12" icon={<Mail className="w-6 h-6" />} trend="Active campaigns" color="text-yellow-600" bgColor="bg-yellow-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Tag className="w-6 h-6 mr-3" />
+            Campaign Management Center
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Marketing Automation Platform</p>
+            <p className="text-gray-400 mb-6">Customer segmentation, multi-channel campaigns, performance tracking, and ROI analysis</p>
+            <Button className="eco-button">Build Marketing Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 16. Loyalty Programs Content
+function LoyaltyProgramsContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">🎁 Loyalty Programs</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Customer rewards and retention system</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("Create Program")}>
+            <Tag className="w-4 h-4 mr-2" />
+            Create Program
+          </Button>
+          <Button className="eco-button-secondary">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Loyalty Analytics
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatsCard title="Active Members" value="3,245" icon={<Users className="w-6 h-6" />} trend="Enrolled customers" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Points Issued" value="1,25,450" icon={<Tag className="w-6 h-6" />} trend="Total points" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="Points Redeemed" value="45,230" icon={<CheckCircle className="w-6 h-6" />} trend="This month" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="Retention Rate" value="85%" icon={<TrendingUp className="w-6 h-6" />} trend="Program impact" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="Tier Distribution" value="3 Tiers" icon={<Shield className="w-6 h-6" />} trend="Silver/Gold/Platinum" color="text-yellow-600" bgColor="bg-yellow-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Tag className="w-6 h-6 mr-3" />
+            Loyalty Management Platform
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">Customer Loyalty System</p>
+            <p className="text-gray-400 mb-6">Points tracking, tier management, rewards catalog, and referral programs</p>
+            <Button className="eco-button">Build Loyalty Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 17. System Health Monitoring Content
+function SystemHealthContent({ onAction }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-[hsl(var(--eco-secondary))]">🖥️ System Health Monitoring</h2>
+          <p className="text-[hsl(var(--eco-text-muted))] font-semibold">Infrastructure monitoring and performance tracking</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="eco-button" onClick={() => onAction("View Metrics")}>
+            <BarChart3 className="w-4 h-4 mr-2" />
+            View Metrics
+          </Button>
+          <Button className="eco-button-secondary">
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Health Check
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatsCard title="Server Uptime" value="99.9%" icon={<CheckCircle className="w-6 h-6" />} trend="Last 30 days" color="text-green-600" bgColor="bg-green-50" />
+        <StatsCard title="API Response" value="145ms" icon={<Clock className="w-6 h-6" />} trend="Avg response time" color="text-blue-600" bgColor="bg-blue-50" />
+        <StatsCard title="Database Health" value="Optimal" icon={<Settings className="w-6 h-6" />} trend="Performance good" color="text-purple-600" bgColor="bg-purple-50" />
+        <StatsCard title="Storage Used" value="65%" icon={<Package className="w-6 h-6" />} trend="Of total capacity" color="text-orange-600" bgColor="bg-orange-50" />
+        <StatsCard title="Error Rate" value="0.02%" icon={<AlertTriangle className="w-6 h-6" />} trend="Last 24 hours" color="text-red-600" bgColor="bg-red-50" />
+      </div>
+
+      <Card className="eco-card">
+        <CardHeader>
+          <CardTitle className="text-[hsl(var(--eco-secondary))] flex items-center">
+            <Settings className="w-6 h-6 mr-3" />
+            Infrastructure Monitoring
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Settings className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-500 mb-4">System Health Dashboard</p>
+            <p className="text-gray-400 mb-6">Server monitoring, API performance, database health, and automated alerts</p>
+            <Button className="eco-button">Build Monitoring Dashboard</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

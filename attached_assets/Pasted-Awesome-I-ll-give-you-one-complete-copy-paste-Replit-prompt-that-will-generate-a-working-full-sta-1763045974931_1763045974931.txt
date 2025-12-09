@@ -1,0 +1,331 @@
+Awesome — I’ll give you one complete, copy-paste Replit prompt that will generate a working full-stack Divine Naturals project (User App + Admin Panel + Backend + DB + seeds + run scripts). It will include:
+
+Monorepo structure (user-app, admin-panel, backend)
+
+Drizzle + PostgreSQL schema + migration + seed data
+
+OTP-style auth (mocked for dev) + JWT sessions + role-based admin auth
+
+All core REST APIs (products, orders, subscriptions, wallet, addresses, admin endpoints)
+
+Basic UI pages for User & Admin (mobile-first user app + admin dashboard) using React + TS + Vite + Tailwind + shadcn + TanStack Query
+
+Docker Compose for backend + Postgres for reproducible local dev
+
+README with run instructions and Postman collection (examples)
+
+Copy everything below and paste into Replit AI (or your Replit project) as a single prompt.
+
+🔁 REPLIT AI: GENERATE FULLSTACK — Divine Naturals (COPY/PASTE START → END)
+
+You are going to generate a full-stack project called Divine Naturals — mobile-first user app + admin panel + backend + database. Produce code files and runnable scripts. Follow the precise spec below.
+
+1) MONOREPO STRUCTURE (create these folders & files)
+divine-naturals/
+├── backend/
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── .env.example
+│   └── src/
+│       ├── server.ts
+│       ├── app.ts
+│       ├── routes/
+│       ├── controllers/
+│       ├── services/
+│       ├── middlewares/
+│       ├── db/
+│       │   ├── drizzle.ts
+│       │   └── schema/
+│       └── seeds/
+│
+├── user-app/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       ├── pages/... (auth, home, shop, subscription, cart, checkout, orders, wallet, etc.)
+│       └── components/... (EcoCard, EcoButton, BottomNav, Header, ProductCard, etc.)
+│
+├── admin-panel/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       └── pages/... (dashboard, vendors, delivery, customers, orders, finance, reports, settings)
+│
+├── docker-compose.yml
+└── README.md
+
+2) BACKEND: Node + Express + TypeScript + Drizzle + PostgreSQL
+Requirements:
+
+TypeScript + Express
+
+Drizzle ORM for schema + migrations
+
+bcrypt for password hashing
+
+jsonwebtoken for JWT
+
+dotenv for env
+
+pg for Postgres driver
+
+cors
+
+helmet
+
+rate-limit (basic)
+
+nodemon for dev
+
+.env.example (create):
+PORT=4000
+DATABASE_URL=postgresql://postgres:password@db:5432/divine_naturals
+JWT_SECRET=change_this_secret
+OTP_SECRET=change_otp_secret
+NODE_ENV=development
+
+Drizzle schema files (create all tables from your spec):
+
+users, products, orders, order_items, milk_subscriptions, vendors, delivery_partners, notifications, wallet_transactions, addresses, support_tickets
+
+Make sure relations/foreign keys are defined.
+
+Implement API endpoints:
+
+Auth:
+
+POST /api/auth/send-otp — accepts { phone } returns { otpSent: true, code: <DEBUG-ONLY> } (simulate OTP in dev)
+
+POST /api/auth/verify-otp — accepts { phone, code } returns { token, user } (create user if not exists)
+
+GET /api/auth/me — auth required, returns current user
+
+Products:
+
+GET /api/products — list (pagination & filters)
+
+GET /api/products/:id
+
+POST /api/products (admin)
+
+PUT /api/products/:id (admin)
+
+Orders:
+
+POST /api/orders — create order (cart => order)
+
+GET /api/orders — user/admin listing (admin sees all)
+
+GET /api/orders/:id
+
+Subscriptions:
+
+GET /api/milk-subscription
+
+POST /api/milk-subscription
+
+PUT /api/milk-subscription/:id
+
+DELETE /api/milk-subscription/:id
+
+POST /api/milk-subscription/:id/pause
+
+POST /api/milk-subscription/:id/resume
+
+Wallet:
+
+GET /api/wallet/balance
+
+GET /api/wallet/transactions
+
+POST /api/wallet/add-money
+
+Addresses:
+
+GET /api/addresses
+
+POST /api/addresses
+
+PUT /api/addresses/:id
+
+DELETE /api/addresses/:id
+
+PUT /api/addresses/:id/set-default
+
+Admin:
+
+GET /api/admin/vendors
+
+GET /api/admin/delivery-partners
+
+GET /api/admin/customers
+
+GET /api/admin/reports
+
+Middlewares:
+
+authMiddleware (JWT token verify)
+
+adminMiddleware (checks user.role === 'admin')
+
+input validation examples (zod or express-validator)
+
+Seeds:
+
+Provide seed scripts to add:
+
+5 products across categories
+
+2 admin users (role: admin)
+
+3 vendors
+
+3 delivery partners
+
+3 sample subscriptions & 5 sample orders
+
+Migration & seed commands:
+
+npm run migrate
+
+npm run seed
+
+npm run dev — start server via ts-node-dev/nodemon
+
+3) DOCKER & DATABASE
+
+Create docker-compose.yml with:
+
+db service: Postgres 15, volume for data
+
+optionally adminer (DB UI)
+
+backend service (optional) — but at minimum db for local dev
+
+Provide command in README:
+
+docker compose up -d
+
+npm install in backend
+
+configure .env (or use example)
+
+4) USER APP (React + TS + Vite + Tailwind + shadcn + Wouter + React Query)
+Pages to generate (minimum skeleton + working fetching):
+
+/auth/phone — send phone to backend /api/auth/send-otp
+
+/auth/otp — verify /api/auth/verify-otp → store JWT
+
+/auth/address — create address
+
+/home — shows greeting, subscription card, wallet card, featured products (fetch /api/products)
+
+/subscription — create/edit/pause/resume (calls subscription endpoints)
+
+/shop /product/:id — product listing & detail
+
+/cart — in-memory cart management with localStorage
+
+/checkout — call /api/orders to create order
+
+/orders — list orders
+
+/wallet — fetch /api/wallet/*
+
+/offers, /addresses, /support, /notifications, /profile, /settings — skeleton pages that call or mock endpoints
+
+Components:
+
+EcoCard, EcoButton, Header, BottomNav, ProductCard, SubscriptionSelector, Toast, Skeleton loader
+
+Provide Tailwind config with eco colors (use the palette supplied earlier)
+
+Use TanStack Query for fetching and caching
+
+For forms use React Hook Form + zod for validation
+
+Use localStorage for JWT & cart
+
+Starter UI behavior:
+
+Use responsive mobile-first layouts
+
+Bottom nav with Home, Milk, Shop, Orders, Profile
+
+5) ADMIN PANEL (React + TS + Vite + Tailwind + shadcn + React Query)
+Pages:
+
+/admin/dashboard — fetch basic stats from /api/admin/reports
+
+/admin/vendors — list/add/edit vendor
+
+/admin/delivery-partners — manage partners
+
+/admin/customers — list customers
+
+/admin/orders — list + assign delivery partner
+
+/admin/finance — simple revenue summary
+
+/admin/reports — sales & subscription trends
+
+/admin/settings — create offers, zones
+
+Components:
+
+Sidebar, Topbar, DataTable (sortable/filterable), AdminCard, Modal dialog, Forms
+
+Role-based admin authentication using same JWT (admin user seeded)
+
+6) DEV CONVENIENCES & EXTRAS
+
+Provide a README.md at repo root with:
+
+setup steps, environment variables, docker commands, migrate + seed, start scripts for backend/user/admin
+
+Provide postman_collection.json example with sample requests for key endpoints
+
+Provide scripts in root to run apps concurrently:
+
+npm run dev:backend
+
+npm run dev:user
+
+npm run dev:admin
+
+7) RUN CHECKS (expected by generator)
+
+Backend starts on port 4000, DB connects to docker Postgres
+
+/api/products returns JSON array (seeded)
+
+User app loads and shows featured products (calls backend)
+
+Admin panel loads and shows dashboard metrics (calls backend)
+
+8) EXTRA: Security & QA
+
+Implement basic rate limiting on auth endpoints
+
+Validate inputs on backend routes
+
+Hash any stored passwords with bcrypt (admin seeded)
+
+JWT expiry 7d (env config)
+
+Add CORS policy to allow local dev origins
+
+FINAL: Output requirements for Replit AI
+
+Create all files described above with working TypeScript code (not pseudo).
+
+Provide clear README.md with commands to run (docker + install + migrate + seed + start).
+
+Make sure npm run dev scripts exist in backend/user/admin to start apps in dev mode.
+
+Seeded data must be present and visible when running.

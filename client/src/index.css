@@ -1,0 +1,893 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Clean Dairy Premium Theme */
+  --background: 0 0% 100%; /* Pure White #FFFFFF */
+  --foreground: 220 13% 9%; /* Charcoal #111827 */
+  --card: 0 0% 100%; /* Pure White */
+  --card-foreground: 220 13% 9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 13% 9%;
+  --primary: 142 76% 36%; /* Fresh Green #16A34A */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 37 69% 97%; /* Cream #FFF9F2 */
+  --secondary-foreground: 220 13% 9%;
+  --muted: 37 69% 97%; /* Cream background */
+  --muted-foreground: 215 16% 47%; /* Slate Gray #6B7280 */
+  --accent: 37 69% 97%;
+  --accent-foreground: 220 13% 9%;
+  --destructive: 25 95% 53%; /* Orange #F97316 */
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 91%; /* Subtle Gray #E5E7EB */
+  --input: 220 13% 91%;
+  --ring: 142 76% 36%;
+  --radius: 1rem; /* 2xl rounded corners */
+  
+  /* Dairy Premium Colors */
+  --dairy-green: 142 76% 36%; /* Fresh Green #16A34A */
+  --dairy-cream: 37 69% 97%; /* Cream #FFF9F2 */
+  --dairy-charcoal: 220 13% 9%; /* Charcoal #111827 */
+  --dairy-slate: 215 16% 47%; /* Slate Gray #6B7280 */
+  --dairy-orange: 25 95% 53%; /* Orange #F97316 */
+  --dairy-border: 220 13% 91%; /* Subtle Gray #E5E7EB */
+  
+  /* Glassmorphism */
+  --glass-white: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+  /* Keep light theme for Divine Naturals */
+  --background: 210 40% 98%;
+  --foreground: 222 84% 5%;
+  --muted: 210 40% 95%;
+  --muted-foreground: 215 16% 47%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 84% 5%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 84% 5%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --primary: 142 76% 36%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 95%;
+  --secondary-foreground: 222 84% 5%;
+  --accent: 217 92% 59%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 142 76% 36%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* Premium Typography */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+  
+  body {
+    @apply antialiased;
+    font-family: 'Inter', 'Poppins', system-ui, sans-serif;
+    background: hsl(var(--background));
+    color: hsl(var(--dairy-charcoal));
+    line-height: 1.6;
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(22, 163, 74, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 249, 242, 0.8) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    color: hsl(var(--dairy-charcoal));
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.3;
+  }
+  
+  .dairy-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: hsl(var(--dairy-charcoal));
+  }
+  
+  .dairy-body {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: hsl(var(--dairy-charcoal));
+  }
+  
+  .dairy-muted {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: hsl(var(--dairy-slate));
+  }
+  
+
+  .text-foreground {
+    color: hsl(var(--dairy-charcoal)) !important;
+  }
+
+  .text-muted-foreground {
+    color: hsl(var(--dairy-slate)) !important;
+  }
+  
+  /* Premium Welcome Header Styling */
+  .welcome-header {
+    background: linear-gradient(135deg, 
+      hsl(var(--dairy-green) / 0.08) 0%, 
+      hsl(var(--dairy-cream)) 50%,
+      rgba(255, 255, 255, 0.95) 100%);
+    border-radius: 2rem;
+    border: 1px solid rgba(22, 163, 74, 0.1);
+    backdrop-filter: blur(15px) saturate(150%);
+    box-shadow: 
+      0 8px 32px rgba(22, 163, 74, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    animation: welcomeSlideIn 0.8s ease-out forwards;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .welcome-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, 
+      rgba(22, 163, 74, 0.03) 0%, 
+      transparent 60%);
+    animation: floatingBubble 8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  
+  /* Premium Animated Counter */
+  .animated-counter {
+    font-family: 'Inter', monospace;
+    font-weight: 700;
+    font-size: 1.875rem;
+    color: hsl(var(--dairy-green));
+    text-shadow: 
+      0 2px 4px rgba(22, 163, 74, 0.2),
+      0 0 20px rgba(22, 163, 74, 0.1);
+    animation: countUpPulse 0.6s ease-out forwards;
+    transition: all 0.3s ease;
+  }
+  
+  .animated-counter:hover {
+    transform: scale(1.05);
+    text-shadow: 
+      0 4px 8px rgba(22, 163, 74, 0.3),
+      0 0 30px rgba(22, 163, 74, 0.2);
+  }
+  
+  /* Premium Notification Badge */
+  .notification-badge {
+    background: linear-gradient(135deg, 
+      hsl(var(--dairy-orange)) 0%, 
+      hsl(var(--dairy-orange) / 0.9) 100%);
+    color: white;
+    border-radius: 50%;
+    box-shadow: 
+      0 4px 12px rgba(249, 115, 22, 0.4),
+      0 0 20px rgba(249, 115, 22, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    animation: premiumNotificationPulse 2s infinite;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .notification-badge::before {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    width: 30%;
+    height: 30%;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    filter: blur(3px);
+  }
+  
+  @keyframes premiumNotificationPulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 
+        0 4px 12px rgba(249, 115, 22, 0.4),
+        0 0 20px rgba(249, 115, 22, 0.3);
+    }
+    50% {
+      opacity: 0.9;
+      transform: scale(1.15);
+      box-shadow: 
+        0 8px 24px rgba(249, 115, 22, 0.6),
+        0 0 40px rgba(249, 115, 22, 0.5);
+    }
+  }
+  
+  @keyframes welcomeSlideIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  @keyframes countUpPulse {
+    0% {
+      opacity: 0;
+      transform: scale(0.8) translateY(10px);
+    }
+    60% {
+      opacity: 0.8;
+      transform: scale(1.1) translateY(-2px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+}
+
+/* Premium Dairy Animations */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes chartReveal {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Ultra Premium Entrance Animations */
+@keyframes cardEntranceFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9) rotateX(15deg);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-8px) scale(1.02) rotateX(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0deg);
+  }
+}
+
+@keyframes statsCardFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.8) rotateY(10deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-5px) scale(1.05) rotateY(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateY(0deg);
+  }
+}
+
+@keyframes statsGlow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: rotate(180deg) scale(1.1);
+  }
+}
+
+@keyframes floatingBubble {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(120deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(240deg);
+  }
+}
+
+@keyframes premiumPulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(22, 163, 74, 0.3),
+      0 0 40px rgba(22, 163, 74, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(22, 163, 74, 0.5),
+      0 0 60px rgba(22, 163, 74, 0.2),
+      0 0 80px rgba(255, 153, 0, 0.1);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes slideUpForm {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(22, 163, 74, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(22, 163, 74, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@layer components {
+  /* Enhanced Component Styles */
+  .eco-gradient {
+    background: var(--gradient-primary);
+  }
+  
+  .eco-gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+
+  .eco-gradient-accent {
+    background: var(--gradient-accent);
+  }
+  
+  .eco-gradient-light {
+    background: linear-gradient(135deg, hsl(var(--eco-light)), hsl(var(--eco-accent) / 0.1));
+  }
+  
+  /* Ultra Premium Dairy Card Styling */
+  .eco-card {
+    @apply rounded-3xl bg-card text-card-foreground border-0 relative overflow-hidden;
+    background: linear-gradient(145deg, 
+      rgba(255, 255, 255, 0.95) 0%, 
+      rgba(255, 255, 255, 0.85) 100%);
+    box-shadow: 
+      0 8px 32px rgba(22, 163, 74, 0.08),
+      0 4px 16px rgba(0, 0, 0, 0.06),
+      0 2px 8px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    animation: cardEntranceFloat 0.6s ease-out forwards;
+  }
+  
+  .eco-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(255, 255, 255, 0.4) 50%, 
+      transparent 100%);
+    transition: left 0.6s ease;
+  }
+  
+  .eco-card:hover::before {
+    left: 100%;
+  }
+  
+  .eco-card:hover {
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.12),
+      0 10px 20px rgba(0, 0, 0, 0.08),
+      0 5px 10px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transform: translateY(-8px) scale(1.01);
+  }
+  
+  /* Ultra Premium Dairy Button Styling */
+  .eco-button {
+    @apply text-white rounded-2xl px-8 py-4 font-semibold relative overflow-hidden;
+    background: linear-gradient(135deg, 
+      hsl(var(--dairy-green)) 0%, 
+      hsl(var(--dairy-green) / 0.9) 50%,
+      hsl(var(--dairy-green)) 100%);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 
+      0 8px 32px rgba(22, 163, 74, 0.25),
+      0 4px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .eco-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(255, 255, 255, 0.3) 50%, 
+      transparent 100%);
+    transition: left 0.6s ease;
+  }
+  
+  .eco-button:hover::before {
+    left: 100%;
+  }
+  
+  .eco-button:hover {
+    background: linear-gradient(135deg, 
+      hsl(var(--dairy-green) / 1.1) 0%, 
+      hsl(var(--dairy-green)) 50%,
+      hsl(var(--dairy-green) / 1.1) 100%);
+    box-shadow: 
+      0 16px 48px rgba(22, 163, 74, 0.35),
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      0 0 40px rgba(22, 163, 74, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px) scale(1.02);
+  }
+  
+  .eco-button:active {
+    transform: translateY(-1px) scale(0.98);
+    box-shadow: 
+      0 8px 24px rgba(22, 163, 74, 0.3),
+      0 4px 12px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  
+  
+  
+  .eco-button:active {
+    transform: translateY(0) scale(1.02);
+  }
+  
+  .eco-button-secondary {
+    @apply bg-secondary text-secondary-foreground rounded-xl px-6 py-3 font-semibold;
+    background: hsl(var(--dairy-cream));
+    color: hsl(var(--dairy-charcoal));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid hsl(var(--dairy-border));
+  }
+  
+  .eco-button-secondary:hover {
+    background: hsl(var(--dairy-cream) / 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+
+  .eco-button-outline {
+    @apply rounded-2xl font-semibold transition-all duration-300 min-h-[52px] px-8 bg-white;
+    border: 2px solid hsl(var(--eco-primary));
+    color: hsl(var(--eco-primary));
+    box-shadow: 0 4px 15px rgba(22, 163, 74, 0.1);
+  }
+
+  .eco-button-outline:hover {
+    background: hsl(var(--eco-primary));
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(22, 163, 74, 0.3);
+  }
+
+  /* Enhanced Input Fields */
+  .eco-input {
+    @apply rounded-xl transition-all duration-200 min-h-[52px] px-6 bg-white;
+    border: 2px solid hsl(var(--eco-light));
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.05);
+    font-weight: 500;
+  }
+
+  .eco-input:focus {
+    border-color: hsl(var(--eco-primary));
+    box-shadow: 
+      0 0 0 4px rgba(22, 163, 74, 0.1),
+      0 4px 15px rgba(22, 163, 74, 0.1);
+    outline: none;
+  }
+
+  /* Enhanced Badges */
+  .eco-badge {
+    @apply rounded-full px-4 py-2 text-sm font-bold;
+    background: linear-gradient(135deg, hsl(var(--eco-accent) / 0.2), hsl(var(--eco-accent) / 0.1));
+    color: hsl(var(--eco-accent));
+    border: 1px solid hsl(var(--eco-accent) / 0.3);
+  }
+
+  .eco-badge-success {
+    background: linear-gradient(135deg, hsl(var(--eco-success) / 0.2), hsl(var(--eco-success) / 0.1));
+    color: hsl(var(--eco-success));
+    border: 1px solid hsl(var(--eco-success) / 0.3);
+  }
+
+  .eco-badge-warning {
+    background: linear-gradient(135deg, hsl(var(--eco-warning) / 0.2), hsl(var(--eco-warning) / 0.1));
+    color: hsl(var(--eco-warning));
+    border: 1px solid hsl(var(--eco-warning) / 0.3);
+  }
+
+  .eco-badge-error {
+    background: linear-gradient(135deg, hsl(var(--eco-error) / 0.2), hsl(var(--eco-error) / 0.1));
+    color: hsl(var(--eco-error));
+    border: 1px solid hsl(var(--eco-error) / 0.3);
+  }
+
+  /* Enhanced KPI Cards */
+  .kpi-card {
+    @apply eco-card p-8 relative overflow-hidden;
+    min-height: 180px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+    border-radius: 24px 24px 0 0;
+  }
+
+  .kpi-card:hover {
+    border-color: hsl(var(--eco-primary) / 0.3);
+    animation: pulse-glow 2s infinite;
+  }
+
+  /* Enhanced Headers */
+  .eco-header {
+    background: linear-gradient(135deg, #ffffff 0%, hsl(var(--eco-cream)) 100%);
+    border-bottom: 2px solid hsl(var(--eco-light));
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Enhanced Tabs */
+  .eco-tabs {
+    @apply bg-white rounded-3xl;
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.1);
+    border: 1px solid hsl(var(--eco-light));
+  }
+
+  .eco-tab-trigger {
+    @apply rounded-2xl font-bold transition-all duration-300 relative overflow-hidden;
+    color: hsl(var(--eco-text-muted));
+    min-height: 48px;
+  }
+
+  .eco-tab-trigger[data-state="active"] {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+    transform: scale(1.05);
+  }
+
+  /* Status Indicators */
+  .status-approved {
+    background: var(--gradient-primary);
+    color: white;
+  }
+
+  .status-pending {
+    background: var(--gradient-accent);
+    color: white;
+  }
+
+  .status-rejected {
+    background: linear-gradient(135deg, hsl(var(--eco-error)), hsl(var(--eco-error) / 0.8));
+    color: white;
+  }
+
+  /* Enhanced Loading States */
+  .eco-skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--eco-light)) 25%,
+      hsl(var(--eco-cream)) 50%,
+      hsl(var(--eco-light)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Enhanced Tooltips */
+  .eco-tooltip {
+    @apply rounded-2xl bg-white text-sm font-semibold p-4;
+    color: hsl(var(--eco-text));
+    box-shadow: 
+      0 10px 40px rgba(10, 14, 39, 0.15),
+      0 0 0 1px rgba(148, 163, 184, 0.1);
+    border: 1px solid hsl(var(--eco-light));
+  }
+
+  /* Form Styling */
+  .eco-form-label {
+    @apply font-bold text-base;
+    color: hsl(var(--eco-secondary));
+  }
+
+  /* Modal/Dialog Styling */
+  .eco-dialog {
+    @apply rounded-3xl border-0;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 
+      0 25px 80px rgba(10, 14, 39, 0.15),
+      0 0 0 1px rgba(148, 163, 184, 0.1);
+  }
+
+  /* Icon Enhancements */
+  .eco-icon-primary {
+    color: hsl(var(--eco-primary));
+    filter: drop-shadow(0 2px 4px rgba(22, 163, 74, 0.3));
+  }
+
+  .eco-icon-secondary {
+    color: hsl(var(--eco-secondary));
+    filter: drop-shadow(0 2px 4px rgba(10, 14, 39, 0.3));
+  }
+
+  .eco-icon-accent {
+    color: hsl(var(--eco-accent));
+    filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+  }
+
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeInScale 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-slide-up {
+    animation: slideUpForm 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  /* Professional Dashboard Grid */
+  .dashboard-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+
+  /* Premium Dairy Navigation */
+  .eco-nav-item {
+    @apply rounded-xl font-medium px-4 py-3;
+    color: hsl(var(--dairy-slate));
+    background: transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .eco-nav-item:hover {
+    background: hsl(var(--dairy-cream));
+    color: hsl(var(--dairy-charcoal));
+    transform: translateX(4px);
+  }
+
+  .eco-nav-item.active {
+    background: hsl(var(--dairy-green));
+    color: white;
+    box-shadow: 
+      0 4px 12px rgba(22, 163, 74, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  
+  .eco-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 25%;
+    bottom: 25%;
+    width: 3px;
+    background: hsl(var(--dairy-orange));
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+  }
+
+  /* Ultra Premium Dairy Admin Layout */
+  .admin-sidebar {
+    background: linear-gradient(180deg, 
+      rgba(255, 255, 255, 0.95) 0%, 
+      rgba(255, 249, 242, 0.9) 100%);
+    border-right: 1px solid rgba(22, 163, 74, 0.1);
+    backdrop-filter: blur(25px) saturate(180%);
+    box-shadow: 
+      8px 0 40px rgba(22, 163, 74, 0.08),
+      4px 0 20px rgba(0, 0, 0, 0.05),
+      inset -1px 0 0 rgba(255, 255, 255, 0.3),
+      inset 1px 0 0 rgba(22, 163, 74, 0.05);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .admin-sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, 
+      rgba(22, 163, 74, 0.02) 0%, 
+      transparent 50%,
+      rgba(255, 153, 0, 0.01) 100%);
+    pointer-events: none;
+  }
+
+  .admin-content {
+    background: hsl(var(--background));
+  }
+  
+  .admin-header {
+    background: hsl(var(--background));
+    border-bottom: 1px solid hsl(var(--dairy-border));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Ultra Premium Dairy KPI Cards */
+  .stats-card {
+    @apply bg-card rounded-3xl relative overflow-hidden;
+    background: linear-gradient(145deg, 
+      rgba(255, 255, 255, 0.95) 0%, 
+      rgba(255, 249, 242, 0.9) 100%);
+    border: 1px solid rgba(22, 163, 74, 0.1);
+    box-shadow: 
+      0 10px 40px rgba(22, 163, 74, 0.08),
+      0 6px 20px rgba(0, 0, 0, 0.05),
+      0 3px 10px rgba(0, 0, 0, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(22, 163, 74, 0.05);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(20px) saturate(180%);
+    animation: statsCardFloat 0.8s ease-out forwards;
+  }
+  
+  .stats-card:hover {
+    box-shadow: 
+      0 15px 40px rgba(0, 0, 0, 0.15),
+      0 8px 20px rgba(0, 0, 0, 0.1),
+      0 4px 10px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+    transform: translateY(-8px) scale(1.02);
+  }
+  
+  .stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, 
+      hsl(var(--dairy-green)) 0%, 
+      rgba(255, 255, 255, 0.8) 25%,
+      hsl(var(--dairy-orange)) 50%, 
+      rgba(255, 255, 255, 0.8) 75%,
+      hsl(var(--dairy-green)) 100%);
+    border-radius: 1.5rem 1.5rem 0 0;
+    opacity: 0.9;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+  }
+  
+  .stats-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, 
+      rgba(22, 163, 74, 0.03) 0%, 
+      transparent 70%);
+    animation: statsGlow 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Premium Dairy Charts */
+  .chart-green { 
+    color: hsl(var(--dairy-green));
+    filter: drop-shadow(0 2px 4px rgba(22, 163, 74, 0.2));
+  }
+  .chart-orange { 
+    color: hsl(var(--dairy-orange));
+    filter: drop-shadow(0 2px 4px rgba(249, 115, 22, 0.2));
+  }
+  .chart-cream { 
+    color: hsl(var(--dairy-cream));
+    filter: drop-shadow(0 2px 4px rgba(255, 249, 242, 0.3));
+  }
+  .chart-slate { 
+    color: hsl(var(--dairy-slate));
+    filter: drop-shadow(0 2px 4px rgba(107, 114, 128, 0.2));
+  }
+}

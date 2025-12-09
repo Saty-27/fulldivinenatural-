@@ -1,0 +1,126 @@
+✅ Delivery Partner System — Complete, step-by-step spec (admin + driver app + backend)
+
+Below is a full, production-ready plan (frontend + backend + DB + APIs + workflows + UI/UX + security + edge cases + tests + deployment notes) so you — or a dev on your team — can implement Delivery Partner Management exactly as you described. It includes how admin creates/verifies drivers (Aadhaar/PAN/mobile/address proof), issues username/password, assigns zones (Bandra, Santacruz, Andheri etc.), assigns orders, blocks/unblocks drivers, and a matching Delivery Partner mobile app flow. I’ll give routes, DB schemas, sample API signatures, UI pages, background jobs, validation, examples and recommended policies.
+
+1 — High level goals & user stories
+
+Admin (web)
+
+Create delivery partner account (capture full name, DOB, phone, email, Aadhaar number, PAN number, address proof image, profile image, vehicle type, licence).
+
+Upload / scan ID docs (Aadhaar, PAN, address proof).
+
+Admin verifies documents, sets verified = true/false.
+
+Admin can generate username & password OR driver can receive one-time link to set password.
+
+Admin assigns drivers to zones/areas (Bandra, Santacruz, Andheri) and to routes/orders.
+
+Admin can block/unblock driver accounts.
+
+Admin can view driver activity, completed deliveries, earnings, assigned orders.
+
+Admin can reassign/transfer orders.
+
+Delivery Partner (mobile/web app)
+
+Signup only if admin-created (or request account flow — optional).
+
+Login with username/password (or OTP).
+
+View assigned orders for the day, accept/decline assignment (admin can force-assign).
+
+Mark stages: Accepted -> Picked Up -> Out for Delivery -> Delivered + capture signature/photo/POD.
+
+See earnings, shift history, and profile + uploaded docs.
+
+If blocked, show restricted message and no access.
+
+System
+
+Role-based access control, audit logs for admin driver-creation/verification/blocks.
+
+Notifications: SMS/WhatsApp or in-app push when driver assigned, blocked, or admin changes credentials.
+
+Secure storage of sensitive documents; access control & encryption at rest.
+
+Admin-level page to bulk-create/import drivers (CSV) and bulk-assign zones.
+
+2 — Database schema (Postgres + Drizzle-like pseudocode)
+-- delivery_partners table
+CREATE TABLE delivery_partners (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name text NOT NULL,
+  email text,
+  phone varchar(15) NOT NULL UNIQUE,
+  username text UNIQUE, -- admin assigned username
+  password_hash text,   -- bcrypt hash (nullable if using OTP reset)
+  aadhaar_number varchar(20),
+  pan_number varchar(20),
+  dob date,
+  vehicle_type varchar(50), -- "bike", "car", "van"
+  license_number varchar(50),
+  address text,
+  zone text, -- e.g., 'Bandra', 'Santacruz', 'Andheri' (consider relationship to zones table)
+  status text DEFAULT 'active', -- active | blocked | suspended | pending_verification
+  verified boolean DEFAULT FALSE, -- documents verified by admin
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- driver_documents
+CREATE TABLE driver_documents (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  delivery_partner_id uuid REFERENCES delivery_partners(id) ON DELETE CASCADE,
+  doc_type text NOT NULL, -- "aadhaar_front", "aadhaar_back", "pan", "address_proof", "profile"
+  storage_path text NOT NULL, -- S3 key or internal path
+  uploaded_at timestamptz DEFAULT now(),
+  verified boolean DEFAULT FALSE,
+  verifier_id uuid, -- admin who verified
+  verified_at timestamptz
+);
+
+-- driver_assignments (which driver is assigned to which order)
+CREATE TABLE driver_assignments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid REFERENCES orders(id),
+  delivery_partner_id uuid REFERENCES delivery_partners(id),
+  assigned_by uuid, -- admin user id
+  assigned_at timestamptz DEFAULT now(),
+  status text DEFAULT 'assigned', -- assigned | accepted | declined | in_progress | completed | cancelled
+  status_history jsonb DEFAULT '[]' -- list of {status, ts, actor}
+);
+
+-- zones table (optional)
+CREATE TABLE zones (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text UNIQUE,
+  city text,
+  area_geo jsonb, -- polygon for geo
+  created_at timestamptz DEFAULT now()
+);
+
+-- audit logs (who did what)
+CREATE TABLE audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  actor_id uuid, -- admin or system
+  actor_type text, -- "admin","system"
+  action text,
+  meta jsonb,
+  created_at timestamptz DEFAULT now()
+);
+
+
+Notes:
+
+Store documents in S3 (or Replit storage) and store references in driver_documents.storage_path. Keep docs private.
+
+Use separate zones table if you need geo routing/filters.
+
+3 — Backend API endpoints (Express + TypeScript signatures)
+
+All admin endpoints require admin auth middleware. Delivery endpoints require driver auth.
+
+Admin (protected)
+POST   /api/admin/delivery-partners              -> create driver (accepts form-data for docs)
+GET    /api/admin/delivery-partners              -> list drivers (filters: zone, sta...

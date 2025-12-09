@@ -1,0 +1,394 @@
+✅ 1. USER APP — WHAT YOU MUST ADD
+
+(These are the MINIMUM required screens + components + logic)
+
+🔹 A. Core User Screens (Must Add)
+1. Auth
+
+ Phone login page
+
+ OTP verification
+
+ Address onboarding
+
+2. Home Page
+
+ User welcome
+
+ Subscription summary card
+
+ Wallet card
+
+ Offers
+
+ Featured products
+
+3. Milk Subscription
+
+ Create subscription
+
+ Edit subscription
+
+ Pause / Resume
+
+ Cancel
+
+ Delivery schedule
+
+ Billing summary
+
+4. Shop (Product Listing)
+
+ Category tabs
+
+ Product cards
+
+ Product details modal/page
+
+ Add to cart
+
+5. Cart
+
+ Items list
+
+ Quantity + / -
+
+ Remove item
+
+ Cart summary
+
+ Checkout button
+
+6. Checkout
+
+ Address select
+
+ Delivery slot select
+
+ Payment select (UPI, COD, Wallet)
+
+ Order confirmation screen
+
+7. Orders
+
+ Active orders
+
+ Past orders
+
+ Order details
+
+ Tracking screen
+
+ Rate order
+
+8. Wallet
+
+ Balance
+
+ Add money
+
+ Transactions list
+
+ Cashback & rewards
+
+9. Offers
+
+ Active offers
+
+ Coupons
+
+ Referral section
+
+ Scratch cards
+
+10. Addresses
+
+ Address list
+
+ Add/edit/delete
+
+ Set default
+
+ GPS map picker
+
+11. Support
+
+ FAQs
+
+ Raise ticket
+
+ My tickets
+
+12. Notifications
+
+ List of notifications
+
+ Filters
+
+ Mark read
+
+ Preferences
+
+13. Profile
+
+ Personal info
+
+ Quick links
+
+ Logout
+
+14. Settings
+
+ App settings
+
+ Theme
+
+ Language
+
+ Security
+
+ Delete account
+
+⭐ USER APP – COMPONENTS YOU MUST ADD
+UI Components:
+
+ Eco Card
+
+ Eco Button
+
+ Bottom Navigation Bar
+
+ Header Component
+
+ Product Card
+
+ Subscription selector
+
+ Input + Select fields
+
+ Toast notifications
+
+ Skeleton loaders
+
+ Rating stars
+
+ Date picker
+
+ Time slot picker
+
+⭐ USER APP – LOGIC YOU MUST ADD
+State + API Logic
+
+ User authentication
+
+ Fetch products
+
+ Fetch/add/edit subscription
+
+ Manage cart
+
+ Create order
+
+ Payment flow
+
+ Wallet transactions
+
+ Push notifications
+
+ Address management
+
+🚀 USER APP = PRODUCT READY
+
+Once all 14 sections + 12 components + logic done → User App is fully ready.
+
+✅ 2. ADMIN PANEL — WHAT YOU MUST ADD
+🔹 A. Core Admin Screens (Must Add)
+1. Dashboard
+
+ Revenue
+
+ Today’s orders
+
+ Active subscriptions
+
+ Vendor stats
+
+ Delivery stats
+
+2. Vendors
+
+ Vendor list
+
+ Add vendor
+
+ Edit vendor
+
+ Vendor performance
+
+ Vendor payouts
+
+3. Delivery Partners
+
+ Partner list
+
+ Assign zones
+
+ Partner performance
+
+ Daily deliveries
+
+ Availability status
+
+4. Customers
+
+ Customer list
+
+ Subscription status
+
+ Order history
+
+ Support tickets
+
+5. Orders Circulation
+
+ All orders
+
+ Assign delivery partner
+
+ Track delivery
+
+ Order summary
+
+ Delivery confirmation
+
+6. Products Management
+
+ Add product
+
+ Edit product
+
+ Manage categories
+
+ Inventory
+
+ Stock alerts
+
+7. Finance
+
+ Revenue report
+
+ Vendor payout report
+
+ Refunds management
+
+ Tax / GST report
+
+8. Reports
+
+ Sales report
+
+ Subscription trends
+
+ Delivery metrics
+
+ Customer retention
+
+9. Admin Settings
+
+ Delivery zones
+
+ Pricing rules
+
+ Offer creation
+
+ User roles & permissions
+
+ Email/SMS templates
+
+⭐ ADMIN PANEL – COMPONENTS YOU MUST ADD
+UI Components:
+
+ Sidebar
+
+ Top Navigation
+
+ Data Table (sortable, filterable)
+
+ Admin Cards
+
+ Charts (react-chartjs-2 or recharts)
+
+ Form components
+
+ Modal/Dialog
+
+ Toast alerts
+
+⭐ ADMIN PANEL – LOGIC YOU MUST ADD
+
+ Admin authentication
+
+ Fetch vendors
+
+ Assign delivery partner
+
+ Fetch orders
+
+ Generate reports
+
+ Manage products
+
+ Finance calculations
+
+ Role-based access control
+
+🔥 FINAL: BOTH SIDES WHAT NEEDS TO BE ADDED (Summary)
+USER (14 modules)
+
+Auth
+
+Home
+
+Subscription
+
+Shop
+
+Cart
+
+Checkout
+
+Orders
+
+Wallet
+
+Offers
+
+Addresses
+
+Support
+
+Notifications
+
+Profile
+
+Settings
+
+ADMIN (9 modules)
+
+Dashboard
+
+Vendors
+
+Delivery partners
+
+Customers
+
+Orders circulation
+
+Product management
+
+Finance
+
+Reports
+
+Settings

@@ -1,0 +1,341 @@
+Divine Naturals — Complete Dairy Delivery Ecosystem (Ultra‑Detailed Prompt)
+
+> Copy‑paste this prompt into your build environment (Replit, your team’s backlog, or a codegen AI) to generate a production‑ready system. Brand name is **Divine Naturals** everywhere.
+
+---
+
+## 0) Vision & Principles
+
+* **Brand**: Divine Naturals — *Pure. Fresh. Daily.*
+* **Look & Feel**: Peaceful, clean, fresh, eco‑minimal. Rounded corners, soft shadows, nature icons, glass bottle illustrations.
+* **Pillars**: Simplicity, transparency, punctuality, sustainability.
+* **Platforms**:
+
+* **User App** (mobile‑first PWA) → Path `/main`
+* **Admin Web Dashboard** (desktop) → Path `/admin`
+* **Vendor App** (mobile web) → Path `/vendor`
+* **Delivery Partner App** (mobile web) → Path `/delivery`
+
+---
+
+## 1) Design Tokens & System
+
+* **Colors**
+
+* Creamy White: `#FFF9F2` (background)
+* Soft Green: `#8FCB81` (primary actions)
+* Pastel Blue: `#A9D6E5` (informational tints)
+* Forest Green: `#2F6F4E` (headings/accents)
+* Milk White: `#FFFFFF` (surfaces)
+* Sky Tint: `#E6F3F7` (alt cards)
+* Text Primary: `#4A4A4A`
+* Text Secondary: `#777777`
+* Divider: `#EAEAEA`
+* Success: `#4BB543`, Warning: `#F4C430`, Error: `#EF5350`
+* **Typography**: Inter/Poppins (system fallback Roboto, Segoe UI). Scale: 32/24/20/18/16/14/12.
+* **Radius**: 8, 12, 16, 20, 24, pill(9999). Default: 16.
+* **Shadow**: `0 6px 20px -4px rgba(0,0,0,.08)`; hover adds blur +2.
+* **Icon Set**: Lucide/Tabler (rounded stroke \~1.5).
+* **Motion**: 200–240ms ease for transitions; Framer Motion for page fade/slide; reduced-motion support.
+* **Grid/Breakpoints**: Mobile base 360–430px; Tablet ≥768; Desktop ≥1024.
+* **Accessibility**: WCAG AA contrast, 48px touch targets, visible focus states, semantic regions, ARIA labels.
+
+Provide exported **CSS variables** (or Tailwind config) for all tokens.
+
+---
+
+## 2) Information Architecture (All Apps)
+
+* **/main**: Home, Milk, Shop, Orders, Profile (bottom tabs).
+* **/admin**: Dashboard, Milk Mgmt, Vendors, Delivery, Users, Products, Transactions, Notifications, Reports, Alerts, Staff, Settings.
+* **/vendor**: Dashboard, Inward, Logs, Payments, Alerts, Sub‑vendors.
+* **/delivery**: Assigned, Route, Deliver (OTP/QR), Issues, Summary.
+
+---
+
+## 3) User App (Path `/main`) — Detailed UI & Flows
+
+### 3.1 Navigation
+
+* Bottom Tab Bar (rounded, pastel icons): 🏠 Home | 🥛 Milk | 🛒 Shop | 📦 Orders | 👤 Profile.
+
+### 3.2 Home
+
+* Header: “Hi {firstName} 👋” + sub: “Fresh deliveries, daily.”
+* 3 CTA Cards (large): Schedule Milk / Browse Products / View Offers.
+* Upcoming Delivery: “10L arriving at 6:00 AM tomorrow.” (Change window if before cutoff.)
+* Delivery Status Card: On‑time / En route / Delayed (chip + tiny timeline). Button: **Track**.
+* Floating Alert Bar (only if delayed): sticky at top; tap → Delay Details sheet (new ETA, compensation rules, contact support).
+* Offers Carousel: minimal banners with leaf confetti micro‑animation.
+
+**States**: no plan → show empty state with “Schedule Milk”; offline → show cached next delivery & disable network actions.
+
+### 3.3 Milk (Plan Builder)
+
+* Calendar month view with selected delivery dates highlighted.
+* Inputs:
+
+* Quantity stepper (min 0.5L, step 0.5).
+* Frequency: Daily / Alternate Days / Weekly.
+* Preferred Time: dropdown of available slots.
+* Pause/Resume toggle with date range.
+* Reminder strip: “Order before **9 PM** for next‑day delivery.”
+* Billing Preview Card: liters × rate, discount, tax, total; CTA **Confirm Plan**.
+* Validation: time within slot, frequency chosen, qty > 0.
+
+**Flow**: Change Plan → Preview → Confirm → Success toast + push.
+
+### 3.4 Shop
+
+* Filters: Freshness | Price | Expiry.
+* 2‑column Product Grid (Paneer, Butter, Ghee, Curd, etc.). Each card: Image, Name, Price, “Add to Cart”, delivery dropdown (With Milk / Custom Slot), qty stepper on add.
+* Floating Cart Summary: items + total; opens cart sheet (edit, coupon, total, checkout).
+
+### 3.5 Orders
+
+* Vertical list of past/upcoming orders.
+* Order Card: product/milk, qty, price, status tracker (Preparing → Out → Delivered), actions: **Track**, **Raise Complaint**, **Download Invoice (PDF)**.
+* Complaint flow: reason select → description → submit → ticket id; link visible in order details.
+
+### 3.6 Profile
+
+* Profile Card: name, phone, edit address; KYC optional for bottle deposit wallet.
+* Billing Summary: This month / Last month; link to statements.
+* Support: WhatsApp / Call / Email quick actions.
+* Settings: Notification toggles, Language selector.
+* Bottle Return Summary: issued vs returned vs pending; request pickup.
+* Referral: code + share; rewards list.
+* Wallet: balance, add money (Razorpay), transactions list.
+
+**Security**: Address masked in share/route views; OTP for address edits.
+
+---
+
+## 4) Admin Web Dashboard (Path `/admin`) — Detailed
+
+### 4.1 Overview
+
+* KPI Cards: Next‑day Milk Requirement, Today’s Orders, Sales (milk vs other), Today Revenue, Monthly Revenue, Pending Bills.
+* Quick Actions: Notify Vendors | Send Billing Reminders | Generate Settlements.
+* Demand Heatmap by locality (soft blue scale).
+
+### 4.2 Modules
+
+1. **Milk Management**
+
+* Date‑wise demand table; forecast widget; assign vendors to zones; CSV export.
+* SLA thresholds (on‑time %, target >= 98%).
+2. **Vendors**
+
+* CRUD vendors; set daily quotas; supply logs feed; KYC review (Aadhaar/PAN images if provided); settlement cycles.
+* Head Vendor grouping (e.g., Santa Cruz → 4 vendors). Approve/reject sub‑vendor submissions.
+3. **Delivery**
+
+* Assign partners by area; generate daily manifests; live status table; reassign on failure.
+4. **Users**
+
+* Filter by Active/Pending/Overdue; bulk reminders; consumption trends; bottle return ledger.
+5. **Products**
+
+* Stock list; price updates; expiry alerts (yellow 7d, red 2d); HSN/tax fields (region‑configurable).
+6. **Transactions**
+
+* Bills & receipts; overdue flags; refunds; coupon/reward logs; payout approvals.
+7. **Notifications**
+
+* Compose pushes (Users/Vendors/Delivery) via App/WhatsApp/SMS; saved templates (Delay, Promo, Billing Due).
+8. **Reports**
+
+* Vendor performance, payment status, customer retention cohorts, demand heatmap; CSV/XLSX/PDF export.
+9. **Alerts Zone**
+
+* Unified feed: Delivery delays, customer complaints, low stock, SLA breach timers; filter by severity.
+10. **Staff & Executives**
+
+* Add staff (Delivery, Marketing, Office). Targets & performance leaderboard (offline orders captured). Geo tag (optional).
+
+11. **System Settings**
+
+* RBAC manager, location scoping, branding (logo/colors/contact), notification preferences, invoice numbering.
+
+### 4.3 RBAC (Role‑based Access)
+
+* **SUPER\_ADMIN**: Full access across all locations; create/delete/swap vendors & heads.
+* **HEAD\_ADMIN**: Scoped to assigned location(s); full control of Vendors/Delivery/Users/Products/Transactions/Notifications/Reports within scope.
+* **VENDOR**: Own vendor data; inward logs; payments; driver docs; sub‑vendor approvals if head.
+* **STAFF (Marketing)**: Leads/offline orders only.
+* **DELIVERY**: Assigned manifests, proof of delivery; no PII beyond need‑to‑know.
+
+---
+
+## 5) Vendor App (Path `/vendor`)
+
+### 5.1 Dashboard
+
+* KPIs: Today Requirement (L), Milk Circulated (L), Balance Pending (L), Next‑Day Requirement.
+* Finance: Estimated Revenue (daily/weekly/monthly), Payment Due (supplier), Payment Received (customers), Profit (optional).
+
+### 5.2 Milk Inward Management
+
+* Form: liters arrived, timestamp, supplier, driver details (Name, Age, Mobile); optional Aadhaar/PAN photos; note field.
+* Action: Submit → status shows **Pending Review / Approved / Changes Requested**; visible to Head/Admin.
+
+### 5.3 Sub‑Vendor System
+
+* Head Vendor view for a locality (e.g., Santa Cruz → 4 vendors): see each vendor’s stats; approve/reject their inward data; push summary to Admin.
+
+### 5.4 Logs & Payments
+
+* Past Logs table with filters (date/variance > threshold).
+* Payment History: dues vs cleared; settlement dates; downloadable statement.
+
+### 5.5 Alerts
+
+* Receive admin notifications; acknowledge; mark resolved; create vendor‑to‑admin alerts for supply issues.
+
+**Validation**: prevent negative liters; detect anomalies vs average; phone format checks; image size/type checks.
+
+---
+
+## 6) Delivery Partner App (Path `/delivery`)
+
+### 6.1 Assigned
+
+* Cards: user name, masked phone, address (map link), qty, time window; route order.
+* Actions: Start route; mark unavailable.
+
+### 6.2 Route
+
+* Open in Google Maps (external); optional internal map list of stops; optimize order.
+
+### 6.3 Deliver
+
+* Swipe to Deliver; or enter OTP; or QR scan from user app.
+* Optional Photo Proof (doorstep); "Leave at gate" checkbox; add remark.
+
+### 6.4 Issues
+
+* Quick pick reasons: Not home, Wrong address, Spill, Vehicle issue; free text note; auto notify Vendor/Admin.
+
+### 6.5 Summary
+
+* Daily summary: total deliveries, returns, earnings; export/share day log.
+
+**Privacy**: limited PII; hide KYC; only necessary contact info while assigned.
+
+---
+
+## 7) Analytics & Reports (All Roles)
+
+* Vendors: Requirement vs Delivered (bar/area).
+* Head Vendors: Location‑wise comparison.
+* Admin: revenue trends, complaint rate by vendor, delivery delay trend, staff performance leaderboard, heatmap demand.
+* Exports: CSV/XLSX/PDF; time range presets (Today, 7d, 30d, Custom).
+
+---
+
+## 8) Notifications & Templates
+
+* **Channels**: In‑app push, Email, WhatsApp/SMS (via provider hooks).
+* **Triggers**: Order created, Out for Delivery, Delivered (OTP success), Delay, Payment Due, Refund, Promo.
+* **Templates**:
+
+* Delay: "We’re sorry — your Divine Naturals delivery is delayed. New ETA: {time}."
+* Billing Reminder: "Your statement of ₹{amount} is due on {date}."
+* Promo: "Fresh offer: {title} — {desc}. Valid till {date}."
+
+Include notification preferences per user and per vendor; digest vs instant.
+
+---
+
+## 9) Non‑Functional Requirements
+
+* **Performance**: TTI < 3s on 4G; images lazy‑loaded; bundle split; SVG icons.
+* **PWA**: Offline cache: schedules, last invoice, profile; queue actions for retry.
+* **Security**: JWT auth; role‑scoped APIs; encrypt KYC at rest; signed URLs for uploads; rate limiting; audit logs.
+* **Privacy**: Data minimization; mask addresses where not needed; configurable retention.
+* **Internationalization**: en‑IN default; allow hi‑IN; locale‑aware dates/currency.
+* **Observability**: console + remote logs, error reporting, uptime checks.
+
+---
+
+## 10) Data Model (High‑Level)
+
+* **User**(id, name, phone, email, role, addresses\[], locale, walletBalance)
+* **Location**(id, name, headAdminId)
+* **Vendor**(id, name, locationId, headVendorUserId, quotaPerDay)
+* **Staff**(id, vendorId|locationId, type: MARKETING|DELIVERY|OFFICE, targets)
+* **Customer**(id, userId, vendorId, bottleDeposit)
+* **Product**(id, name, type, price, unit, stock, expiry)
+* **Plan**(id, customerId, quantityL, frequency, slot, status, pauseRange)
+* **Order**(id, customerId, vendorId, items\[], liters, price, status)
+* **DeliveryLog**(id, orderId, status, otp/qr, photoProofUrl, remarks, deliveredAt)
+* **RequirementPlan**(id, vendorId, date, litersRequired, litersDelivered)
+* **MilkInward**(id, vendorId, date, litersArrived, driver{name,age,phone,docs})
+* **Transaction**(id, orderId|customerId, amount, mode, status, invoiceUrl)
+* **Complaint**(id, customerId, vendorId, reason, text, status)
+* **Promotion**(id, title, desc, active, locationId|vendorId)
+* **Notification**(id, toUserId, type, message, channel, sentAt)
+* **BottleLedger**(id, customerId, issued, returned, pending)
+* **Alert**(id, type: DELAY|LOW\_STOCK|CUSTOMER\_QUERY, scope, severity, status)
+
+Provide ER relationships and migrations for PostgreSQL when generating code.
+
+---
+
+## 11) API Surface (Examples)
+
+* **Auth**: `/auth/register`, `/auth/login`, `/auth/refresh`.
+* **User**: `/me`, `/me/address`, `/wallet`, `/bottle-ledger`.
+* **Milk Plan**: `/plans`(CRUD), `/plans/{id}/pause`, `/plans/{id}/resume`.
+* **Shop**: `/products`(list/filter), `/cart`, `/checkout`.
+* **Orders**: `/orders`, `/orders/{id}`, `/orders/{id}/invoice`.
+* **Complaints**: `/complaints`(create, list, status).
+* **Vendor**: `/vendor/dashboard`, `/vendor/inward`(create/list), `/vendor/logs`, `/vendor/payments`.
+* **Head Vendor**: `/head/vendors`, \
+11) API Surface (continued)
+Head Vendor
+* GET /head/vendors → list sub-vendors in locality.
+* POST /head/vendors/{id}/approve → approve sub-vendor inward logs.
+* POST /head/vendors/{id}/reject → reject/change request.
+* GET /head/vendors/{id}/stats → vendor stats (liters, dues, SLA).
+
+Admin
+* /admin/dashboard → KPI cards, heatmap data.
+* /admin/milk → demand forecast, assign vendors, CSV export.
+* /admin/vendors(CRUD) → manage vendors.
+* /admin/vendors/{id}/quota → set/update quota.
+* /admin/vendors/{id}/settlement → payout info.
+* /admin/delivery → assign/reassign manifests.
+* /admin/users → list, filter, bulk reminders.
+* /admin/products(CRUD) → stock, pricing, expiry alerts.
+* /admin/transactions → list, refunds, overdue, payout approvals.
+* /admin/notifications → send push/whatsapp/sms.
+* /admin/reports → cohort, revenue, complaints, export.
+* /admin/alerts → feed of SLA breach, complaints, supply issues.
+* /admin/staff(CRUD) → add staff, set targets.
+* /admin/settings → RBAC roles, branding, invoice numbering.
+
+Delivery
+* /delivery/assigned → list of assigned orders (with masked PII).
+* /delivery/route → optimized stop sequence.
+* /delivery/orders/{id}/deliver → confirm delivery (OTP/QR).
+* /delivery/orders/{id}/photo → upload proof.
+* /delivery/issues → report issue.
+* /delivery/summary → daily summary.
+
+Staff (Marketing/Office)
+* /staff/leads → create, view, convert offline leads.
+* /staff/offline-orders → capture offline milk/product orders.
+* /staff/performance → leaderboard view.
+
+System/Shared
+* /notifications → fetch history, mark read.
+* /alerts → scoped to role/location.
+* /files/upload → signed URL (for Aadhaar, PAN, photo proof).
+* /reports/export → CSV/XLSX/PDF.
+
+Future/Stretch
+* /analytics → generic analytics service endpoint.
+* /integrations/payment → Razorpay/UPI hooks.
+* /integrations/maps → Google Maps API proxy.

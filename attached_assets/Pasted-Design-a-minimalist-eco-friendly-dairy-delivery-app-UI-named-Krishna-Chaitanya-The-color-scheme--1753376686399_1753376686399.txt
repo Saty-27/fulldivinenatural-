@@ -1,0 +1,103 @@
+Design a minimalist, eco-friendly dairy delivery app UI named "Krishna Chaitanya". The color scheme should include creamy whites, soft greens, and pastel blues with glass bottle illustrations, subtle farm icons, rounded corners, soft shadows, and modern typography. It should feel peaceful, clean, and fresh — inspired by nature and purity.
+📱 1. User App UI (Path: /main)
+Overall Layout:
+
+Bottom Tab Navigation: 🏠 Home | 🥛 Milk | 🛒 Shop | 📦 Orders | 👤 Profile
+Eco-minimalist design with light color palette
+Large, rounded buttons, friendly icons, easy-to-read typography
+🏠 Home Page:
+
+Greeting text like: “Hi Satyam 👋”
+Three big CTA cards:
+→ Schedule Milk
+→ Browse Dairy Products
+→ View Offers
+Section: Upcoming Delivery Info (e.g., “10L arriving at 6AM tomorrow”)
+Delivery Status Card (if en route or delayed)
+Floating Alert bar if milk/product is delayed
+🥛 Milk Page:
+
+Monthly Calendar (highlight selected dates)
+Input fields:
+→ Quantity (Liters)
+→ Delivery Frequency: Daily / Alt Days / Weekly
+→ Preferred Delivery Time
+Toggle: Pause/Resume
+Reminder bar: “Order before 9 PM for next-day delivery”
+Card-style billing preview (show ₹ total)
+🛒 Products Page (Shop):
+
+Dairy product grid (Paneer, Ghee, Butter, etc.)
+Filters: Freshness | Price | Expiry
+Each product card:
+→ Image | Name | Price
+→ “Add to Cart” button
+→ Dropdown for “Delivery with Milk” or Custom Slot
+Floating Cart Button with price total
+📦 Orders Page:
+
+Vertical scroll of past and upcoming orders
+Order Cards:
+→ Product Image + Quantity
+→ Status Tracker: Preparing → Out for Delivery → Delivered
+→ “Track” and “Raise Complaint” buttons
+→ Invoice PDF download option
+👤 Profile Page:
+
+Profile Card: Name, Phone, Edit Address
+Billing Summary (This Month / Previous)
+Support Options: WhatsApp | Call | Email
+Language Selector | Notification Settings
+Bottle Return Summary
+Referral Program Tracker
+Wallet Balance or Razorpay Integration
+🧑‍💼 2. Admin Web Dashboard UI (Path: /admin)
+Style:
+Dashboard UI with a sidebar, analytics cards, and tabs. Flat design with soft contrast colors and intuitive admin layout.
+
+Dashboard Overview Page:
+
+Total Milk Requirement (Next Day)
+Total Orders
+Sales Graph (Milk, Products)
+Revenue (Monthly / Daily)
+Pending Bills Count
+Quick Actions: Notify Vendors | Send Billing Reminders
+Tabs:
+
+✅ Milk Management: Date-wise demand, assign vendors, delivery zones
+✅ Vendor Panel: Add vendors, assign quota, supply logs, KYC, settlements
+✅ Delivery Panel: Assign partners by area, view delivery logs
+✅ Users: Filter by Active/Pending/Overdue, manage billing
+✅ Products: Stock list, price update, expiry alerts
+✅ Transactions: Billing history, overdue flags, reward/coupon logs
+✅ Notifications: Push to Users/Vendors/Delivery (text + WhatsApp)
+✅ Reports: Heatmap, retention, vendor performance, payment status
+🐄 3. Vendor App UI (Path: /vender)
+Simple card-based interface for mobile:
+
+Tabs:
+
+Daily Milk Requirement (Ltr)
+Confirm Ready Quantity
+Upload Photo of Milk Cans (optional)
+Remarks Field
+View Past Logs
+View Payment History
+Notification Alerts from Admin
+🚴 4. Delivery Partner App UI (Path: /delevery)
+Lightweight mobile layout with location + delivery tracking:
+
+Tabs:
+
+Assigned Deliveries (User Address, Qty, Time)
+Map Route (optional integration)
+Swipe to Mark Delivered OR OTP / QR Scan
+Upload Photo Proof (optional)
+Complaint/Issue Button
+Daily Summary Card (Total Deliveries, Earnings)
+💡 Additions:
+Use smooth animations (Framer Motion or CSS transitions)
+Consistent icon set (e.g., Tabler Icons or Lucide)
+Ensure accessibility contrast for mobile users
+Responsive design for mobile & tablets

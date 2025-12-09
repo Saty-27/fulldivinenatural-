@@ -1,0 +1,267 @@
+⚡ TASK:
+
+Build a complete monthly billing system for a dairy shop application.
+The system must be fully functional, integrated with backend + database, and visible on User side + Admin side.
+
+Focus:
+✔ Cash-only payments (no Razorpay).
+✔ Bills must be auto-generated every month.
+✔ Bills must calculate all subscriptions + orders.
+✔ Admin must manage all bills with full control.
+
+📌 1. DATABASE STRUCTURE (PostgreSQL + Drizzle)
+
+Create or update these tables:
+
+bills
+column	type
+id	serial pk
+userId	integer (fk users.id)
+month	text (YYYY-MM)
+totalAmount	integer
+previousDue	integer
+grandTotal	integer
+status	text → ('unpaid', 'paid', 'overdue')
+generatedAt	timestamp
+dueDate	timestamp
+paidAt	timestamp (nullable)
+billItems
+column	type
+id	serial pk
+billId	integer (fk bills.id)
+type	text ('subscription' or 'order')
+relatedId	integer (subscriptionId or orderId)
+date	date
+description	text
+quantity	numeric
+price	integer
+total	integer
+📌 2. BACKEND LOGIC (Node + Express + Drizzle)
+A. Monthly Bill Generator (CRON JOB)
+
+Create a cron process that runs at 11:59 PM on the last day of every month.
+
+For each user:
+
+Get all subscription deliveries of that month
+
+Get all orders placed that month
+
+Sum all totals
+
+Add previous unpaid bill
+
+Create new bill in table bills
+
+Create billItems for each delivery/order
+
+Set:
+
+status = 'unpaid'
+
+dueDate = generatedAt + 5 days
+
+B. API ENDPOINTS
+User APIs
+GET /api/billing
+GET /api/billing/:billId
+POST /api/billing/pay/:billId  ← CASH ONLY (mark paid)
+
+Admin APIs
+GET /api/admin/billing
+GET /api/admin/billing/:billId
+PATCH /api/admin/billing/:billId/status    ← paid / unpaid / overdue
+PATCH /api/admin/billing/:billId/extend    ← extend due date
+PATCH /api/admin/billing/:billId/update    ← reduce amount, add penalty
+
+📌 3. USER SIDE PAGES
+Page: /billing
+
+Show:
+
+Section 1 — Current Month Bill
+
+Month name
+
+Total amount
+
+Due date (5 days limit)
+
+Status badge:
+
+🟥 Overdue
+
+🟧 Unpaid
+
+🟩 Paid
+
+Button: Mark as Paid (Cash)
+
+Section 2 — Bill Breakdown
+
+Table:
+
+| Date | Description | Qty | Price | Total |
+
+Section 3 — Previous Bills
+
+List of past 12 months:
+
+| Month | Amount | Status | View |
+
+Section 4 — Download PDF
+
+Button: "Download Invoice" (simple HTML-to-PDF)
+
+📌 4. ADMIN PANEL PAGES
+Page: /admin/billing
+Top Filters
+
+All Bills
+
+Paid
+
+Unpaid
+
+Overdue
+
+Table of All Bills
+
+| User | Month | Amount | Due Date | Status | Action |
+
+Action Buttons (Admin Controls)
+
+Per bill:
+
+✔ Mark as Paid
+
+PATCH → /api/admin/billing/:billId/status
+
+✔ Extend Due Date
+
+Modal:
+
+Input: New due date
+
+Submit → update bill
+
+✔ Add Penalty
+
+Modal:
+
+Input: penalty amount
+
+Append to bill total
+
+Update grandTotal
+
+✔ Reduce Amount / Give Discount
+
+Modal:
+
+Input: discount
+
+Update grandTotal
+
+✔ View Details
+
+Open bill detail page like user view.
+
+📌 5. BILL GENERATION LOGIC
+Formula:
+subscriptionDeliveriesTotal = SUM( qty * price )
+ordersTotal = SUM( orderItems.price )
+totalAmount = subscriptionDeliveriesTotal + ordersTotal
+grandTotal = totalAmount + previousDue
+
+Bill Conditions:
+
+If currentDate > dueDate AND status = 'unpaid':
+→ automatically set status = "overdue"
+
+📌 6. PDF TEMPLATE
+
+Make a simple invoice:
+
+DIVINE NATURALS – MONTHLY INVOICE
+Customer: [name]
+Month: [YYYY-MM]
+Generated On: [date]
+
+Items:
+-------------------------------------------------
+Date | Description | Qty | Rate | Total
+-------------------------------------------------
+
+Subtotal: ₹xxx
+Previous Due: ₹xxx
+Grand Total: ₹xxx
+Due Date: [date]
+
+Status: [paid/unpaid/overdue]
+
+📌 7. FRONTEND LOGIC (React + TS)
+
+Use React Query:
+
+useQuery("billing", fetchUserBills)
+useQuery(["bill", billId], fetchBillDetails)
+
+
+Use shadcn components for:
+
+Tables
+
+Badges
+
+Modals
+
+Buttons
+
+Cards
+
+Mobile responsive
+Clean green/blue Divine Naturals theme.
+
+📌 8. COMPLETE FLOW
+STEP 1
+
+Cron generates bill monthly
+
+STEP 2
+
+User sees bill in /billing
+
+STEP 3
+
+User pays CASH to shop owner
+
+STEP 4
+
+Admin opens /admin/billing
+
+STEP 5
+
+Admin marks bill as “paid”
+
+STEP 6
+
+System cleans previous due
+Next month bill calculates normally
+
+📌 9. FINAL OUTPUT (WHAT I EXPECT FROM REPLIT)
+
+Replit must deliver:
+
+✔ Database tables
+✔ Bill generation backend
+✔ All APIs
+✔ User billing page
+✔ Admin billing control page
+✔ Full working CRUD
+✔ Cash-only payment flow
+✔ PDF invoice
+✔ Auto overdue status
+✔ Responsive UI
+✔ React Query integration
+✔ Tested with dummy data

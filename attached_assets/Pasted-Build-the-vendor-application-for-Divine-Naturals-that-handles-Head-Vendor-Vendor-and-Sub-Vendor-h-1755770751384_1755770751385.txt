@@ -1,0 +1,77 @@
+Build the /vendor application for Divine Naturals that handles Head Vendor, Vendor, and Sub-Vendor hierarchy, fully integrated with Admin and Delivery Partner.
+System Hierarchy (Vendor Module)
+Head Vendor (Area Supervisor)
+Example: Santa Cruz Head Vendor.
+Can manage and monitor all vendors + sub-vendors under that area.
+Has read/write authority for vendor operations.
+Dashboard must include area-wide analytics.
+Vendor (Main Vendor in an area)
+Example: Santa Cruz Vendor.
+Can handle own requirement, deliveries, earnings, and delivery partner assignments.
+Can oversee their sub-vendors.
+Sub-Vendor (Branch Vendor under Main Vendor)
+Example: Santa Cruz → Vendor → Sub-Vendor (4 total).
+Can manage local requirements, deliveries, and earnings.
+Can log daily milk requirement, delivery, earnings, and assign drivers.
+Functionalities
+Sub-Vendor Dashboard
+Requirement Tracking
+Input fields: Today’s Requirement, Milk Circulated, Milk Delivered, Next Day Requirement.
+Track Previous Day Requirement for comparison.
+Financial Tracking
+Today’s Earnings (auto-calculated).
+Weekly Earnings.
+Monthly Earnings.
+Payment Due → shows how much to pay upstream vendor.
+Delivery Partner Tracking
+Assign delivery partner.
+Mandatory fields: Name, Mobile Number.
+Optional fields: Age, Aadhaar card photo, PAN card photo.
+Delivery Status: Pending / Completed.
+Reports & Analytics
+Graphs of Requirement vs Delivery vs Revenue (daily/weekly/monthly).
+Comparison with previous week/month.
+Vendor Dashboard
+All Sub-Vendor Monitoring
+Tab view for each sub-vendor.
+See Today’s Requirement, Circulated Milk, Delivered Milk, Revenue, Payments.
+Drill-down: Sub-vendor wise history & performance.
+Requirement Management
+Consolidated requirement = Vendor’s requirement + sub-vendors’ requirement.
+Next day forecast.
+Financial Tracking
+Vendor’s earnings.
+Sub-vendor earnings summary.
+Total payments received/pending.
+Delivery Management
+Assign delivery partners across vendor + sub-vendors.
+Track KYC of all delivery partners.
+Alerts
+Low delivery vs requirement.
+Pending payment from sub-vendor.
+KYC missing for delivery partner.
+Head Vendor Dashboard
+Sub-Vendor & Vendor Summary
+Full list of vendors + sub-vendors under the head vendor’s area.
+Overview of requirements, deliveries, earnings.
+Analytics Dashboard
+Total milk circulated in the area.
+Daily, weekly, monthly earnings for the area.
+Sub-vendor ranking (performance-based).
+Delivery Partner Management
+Complete list of all drivers in the area.
+KYC status overview.
+Requirement Forecast Tab
+Consolidated next day demand for the entire area.
+Sub-vendor breakdown.
+Alerts & Issues Tab
+Delivery shortfall alerts.
+Payment pending alerts.
+Escalation issues flagged by vendors/sub-vendors.
+Must-Have Features (All Vendor Roles)
+Role-based login: Head Vendor, Vendor, Sub-Vendor.
+Earnings breakdown: Filter by day/week/month.
+Demand Forecasting: AI/logic to suggest requirements based on past data.
+Notification System: Alerts for delivery, payment, KYC, requirement deadlines.
+Search & Filter: Quickly find vendors, sub-vendors, delivery partners.
+Export Reports: Excel/PDF for earnings and requirement reports.

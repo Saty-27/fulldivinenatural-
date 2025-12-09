@@ -1,0 +1,119 @@
+🎯 USER BILLING PAGE – FULL ULTRA-DETAILED PROMPT (COPY–PASTE)
+
+Create a clean, modern, dairy-brand styled billing page UI for a subscription milk delivery app (Divine Naturals).
+The theme must use: Green (#16a34a), Blue (#3b82f6), Light Gray (#f9fafb), White (#ffffff).
+Style: Rounded corners, soft shadows, clean typography, responsive design.
+
+🧾 PAGE TITLE + LAYOUT
+
+Page Title:
+“🧾 Monthly Bills & Payments”
+
+Layout Structure:
+
+┌─────────────────────────────────────────────┐
+│ Header                                       │
+│ Title: Monthly Bills & Payments              │
+│ Subtitle: Track your monthly milk bills       │
+│ Right side: 📥 Download PDF | 💰 Pay Online   │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ CURRENT MONTH BILL (Big Card)                │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ PREVIOUS BILLS (List of Cards)               │
+└─────────────────────────────────────────────┘
+
+
+Spacing: 24px
+Responsive:
+• 1 column on mobile
+• 2 columns on tablet
+• 3 columns on desktop
+
+🧾 SECTION 1 — CURRENT MONTH BILL CARD (MAIN FOCUS)
+
+Card Style:
+Background: white
+Padding: 20px
+Border: 1px solid #e5e7eb
+Border-radius: 12px
+Shadow: subtle (0 1px 3px rgba(0,0,0,0.1))
+
+Header inside card
+Current Month: December 2025
+Status: 🟥 UNPAID / 🟧 DUE IN 3 DAYS / 🟩 PAID
+
+
+Status Badge Styles:
+
+UNPAID → background: #fee2e2, text: #b91c1c
+
+DUE SOON → background: #fef9c3, text: #ca8a04
+
+PAID → background: #dcfce7, text: #15803d
+
+Bill Breakdown Table
+
+Create a clean card-style table:
+
+Product / Type          Qty / Days    Rate       Total
+────────────────────────────────────────────────────────
+Milk (Subscription)     30 days       ₹60/L      ₹1800
+Ghee (Order)            1 unit        ₹350       ₹350
+Paneer (Order)          2 units       ₹220       ₹440
+────────────────────────────────────────────────────────
+Subtotal                                         ₹2590
+Previous Dues                                   ₹ 100
+────────────────────────────────────────────────────────
+GRAND TOTAL                                    ₹2690
+
+Bill Footer Actions (big buttons)
+
+Two large buttons:
+
+[💰 PAY NOW] (Green button)  
+[📥 DOWNLOAD PDF] (Blue button)
+
+
+PAY NOW button → full width on mobile
+Padding 14px
+Font weight 700
+Border radius 8px
+
+🧾 SECTION 2 — PREVIOUS BILLS LIST (REPEATING CARDS)
+
+Each bill appears as a card:
+
+┌─────────────────────────────────────────────┐
+│ Month: November 2025                         │
+│ Amount: ₹3120                                │
+│ Status: 🟩 PAID                               │
+│                                              │
+│ Buttons: [Download PDF] [View Details]       │
+└─────────────────────────────────────────────┘
+
+Card Styling:
+
+White background
+
+Padding 16px
+
+Border-radius: 8px
+
+Shadow on hover
+
+Status badge on top-right
+
+📱 RESPONSIVE RULES
+
+Mobile (max-width 600px):
+• Everything stacked
+• Pay button full width
+• Previous bills 1 column
+
+Desktop:
+• Previous bills 3 columns
+• Cards evenly spaced
